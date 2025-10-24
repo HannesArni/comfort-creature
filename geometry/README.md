@@ -47,7 +47,7 @@ All types support conversion between global and local frames using the `to_globa
 ## Example
 
 ```python
-from coordinates import GlobalCoordinate, GlobalPose, LocalCoordinate
+from geometry import GlobalCoordinate, GlobalPose, LocalCoordinate
 
 # Robot is at global position (10, 5) facing 90° to the left (π/2 radians)
 current_pose = GlobalPose(

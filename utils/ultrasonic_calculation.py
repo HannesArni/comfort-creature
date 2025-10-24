@@ -1,4 +1,4 @@
-from coordinates import LocalCoordinate
+from geometry import LocalCoordinate
 
 
 def ultrasonic_calculation(target: LocalCoordinate) -> LocalCoordinate:
