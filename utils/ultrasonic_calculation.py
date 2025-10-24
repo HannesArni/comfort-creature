@@ -1,4 +1,4 @@
-from utils import LocalCoordinate
+from coordinates import LocalCoordinate
 
 
 def ultrasonic_calculation(target: LocalCoordinate) -> LocalCoordinate:

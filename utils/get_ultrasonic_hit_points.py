@@ -18,7 +18,7 @@ sensors = [
 ]
 
 def get_ultrasonic_hit_points() -> list[LocalCoordinate]:
-    hit_points = []
+    hit_points: list[LocalCoordinate] = []
     for sensor in sensors:
         distance_reading = 100  # TODO: Replace with actual reading from sensor, let's work with 100 cm for now
 
