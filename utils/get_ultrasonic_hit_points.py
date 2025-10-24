@@ -5,17 +5,28 @@ from utils import LocalPose, LocalCoordinate
 
 @dataclass
 class UltrasonicSensor:
-    """
-    Where is the sensor located on the chair?
-    """
+    """Where is the sensor located on the chair?"""
+
     pose: LocalPose
     name: str = "Ultrasonic Sensor"
 
+
 sensors = [
-    UltrasonicSensor(LocalPose(LocalCoordinate(30, 30), math.radians(45)), 'Front-Left'),
-    UltrasonicSensor(LocalPose(LocalCoordinate(30, 30), 0), 'Front'),
-    UltrasonicSensor(LocalPose(LocalCoordinate(-30, 30), math.radians(365-45)), 'Front-Right'),
+    UltrasonicSensor(
+        pose=LocalPose(position=LocalCoordinate(30, 30), heading=math.radians(45)),
+        name="Front-Left",
+    ),
+    UltrasonicSensor(
+        pose=LocalPose(position=LocalCoordinate(30, 30), heading=0), name="Front"
+    ),
+    UltrasonicSensor(
+        pose=LocalPose(
+            position=LocalCoordinate(-30, 30), heading=math.radians(365 - 45)
+        ),
+        name="Front-Right",
+    ),
 ]
+
 
 def get_ultrasonic_hit_points() -> list[LocalCoordinate]:
     hit_points: list[LocalCoordinate] = []
@@ -28,8 +39,8 @@ def get_ultrasonic_hit_points() -> list[LocalCoordinate]:
 
         hit_point = sensor.pose.position.move(x_translation, y_translation)
         hit_points.append(hit_point)
-        print(f"Sensor {sensor.name} at position {sensor.pose.position} with heading {sensor.pose.heading} reads distance {distance_reading} cm, hit point at {hit_point}")
+        print(
+            f"Sensor {sensor.name} at position {sensor.pose.position} with heading {sensor.pose.heading} reads distance {distance_reading} cm, hit point at {hit_point}"
+        )
 
     return hit_points
-
-
