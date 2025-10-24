@@ -21,8 +21,8 @@ class GlobalCoordinate:
     def to_local(self, pose: 'GlobalPose') -> 'LocalCoordinate':
         """Convert to local coordinates relative to a given pose."""
         # Translate to pose origin
-        dx = self.x - pose.x
-        dy = self.y - pose.y
+        dx = self.x - pose.position.x
+        dy = self.y - pose.position.y
 
         # Rotate by -heading to get local coordinates
         cos_h = math.cos(-pose.heading)
@@ -48,16 +48,37 @@ class LocalCoordinate:
         """Calculate Euclidean distance to another coordinate."""
         return math.sqrt((other.x - self.x)**2 + (other.y - self.y)**2)
 
+    def move(self, dx: float, dy: float) -> 'LocalCoordinate':
+        """Return a new coordinate moved by dx and dy."""
+        return LocalCoordinate(self.x + dx, self.y + dy)
+
     def to_global(self, pose: 'GlobalPose') -> GlobalCoordinate:
         """Convert to global coordinates given the current pose."""
         # Rotate by heading
         cos_h = math.cos(pose.heading)
         sin_h = math.sin(pose.heading)
 
-        global_x = self.x * cos_h - self.y * sin_h + pose.x
-        global_y = self.x * sin_h + self.y * cos_h + pose.y
+        global_x = self.x * cos_h - self.y * sin_h + pose.position.x
+        global_y = self.x * sin_h + self.y * cos_h + pose.position.y
 
         return GlobalCoordinate(global_x, global_y)
+
+
+@dataclass
+class LocalPose:
+    """
+    Position and orientation in local coordinates (relative to robot).
+    """
+    position: LocalCoordinate
+    heading: float  # radians, relative to robot's current heading. Positive is counter-clockwise.
+
+    def to_global(self, current_pose: 'GlobalPose') -> 'GlobalPose':
+        """Convert to global pose given the current robot pose."""
+        # Convert local coordinate to global
+        global_position = self.position.to_global(current_pose)
+        global_heading = current_pose.heading + self.heading
+
+        return GlobalPose(global_position, global_heading)
 
 
 @dataclass
@@ -65,10 +86,18 @@ class GlobalPose:
     """
     Robot/chair position and orientation in global coordinates.
     """
-    x: float
-    y: float
-    heading: float  # radians, 0 = facing along positive y-axis
+    position: GlobalCoordinate
+    heading: float  # radians, 0 = facing along positive y-axis. Positive is counter-clockwise.
 
     def move(self, dx: float, dy: float, dheading: float = 0.0) -> 'GlobalPose':
         """Return a new pose moved by dx, dy, and rotated by dheading."""
-        return GlobalPose(self.x + dx, self.y + dy, self.heading + dheading)
+        new_position = self.position.move(dx, dy)
+        return GlobalPose(new_position, self.heading + dheading)
+
+    def to_local(self, reference_pose: 'GlobalPose') -> LocalPose:
+        """Convert to local pose relative to a reference pose."""
+        # Convert position to local coordinates
+        local_position = self.position.to_local(reference_pose)
+        local_heading = self.heading - reference_pose.heading
+
+        return LocalPose(local_position, local_heading)
