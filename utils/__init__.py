@@ -1,3 +1,3 @@
-from .types import Coordinate
+from .types import GlobalCoordinate, LocalCoordinate, GlobalPose
 
-__all__ = ['Coordinate']
+__all__ = ['GlobalCoordinate', 'LocalCoordinate', 'GlobalPose']
