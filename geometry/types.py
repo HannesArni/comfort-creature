@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 
 @dataclass
@@ -73,7 +73,9 @@ class LocalPose:
     """
 
     position: LocalCoordinate
-    heading: float  # radians, relative to robot's current heading. Positive is counter-clockwise.
+    # radians, relative to robot's current heading.
+    # Positive is counter-clockwise.
+    heading: float
 
     def to_global(self, current_pose: "GlobalPose") -> "GlobalPose":
         """Convert to global pose given the current robot pose."""
@@ -91,7 +93,9 @@ class GlobalPose:
     """
 
     position: GlobalCoordinate
-    heading: float  # radians, 0 = facing along positive y-axis. Positive is counter-clockwise.
+    # radians, 0 = facing along positive y-axis.
+    # Positive is counter-clockwise.
+    heading: float
 
     def move(self, dx: float, dy: float, dheading: float = 0.0) -> "GlobalPose":
         """Return a new pose moved by dx, dy, and rotated by dheading."""

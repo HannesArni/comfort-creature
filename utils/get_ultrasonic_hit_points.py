@@ -1,6 +1,7 @@
 import math
 from dataclasses import dataclass
-from utils import LocalPose, LocalCoordinate
+
+from utils import LocalCoordinate, LocalPose
 
 
 @dataclass
@@ -31,7 +32,9 @@ sensors = [
 def get_ultrasonic_hit_points() -> list[LocalCoordinate]:
     hit_points: list[LocalCoordinate] = []
     for sensor in sensors:
-        distance_reading = 100  # TODO: Replace with actual reading from sensor, let's work with 100 cm for now
+        # TODO: Replace with actual reading from sensor,
+        # let's work with 100 cm for now
+        distance_reading = 100
 
         # You remember pythagoras from school, right?
         x_translation = distance_reading * math.sin(sensor.pose.heading)
@@ -40,7 +43,10 @@ def get_ultrasonic_hit_points() -> list[LocalCoordinate]:
         hit_point = sensor.pose.position.move(x_translation, y_translation)
         hit_points.append(hit_point)
         print(
-            f"Sensor {sensor.name} at position {sensor.pose.position} with heading {sensor.pose.heading} reads distance {distance_reading} cm, hit point at {hit_point}"
+            f"Sensor {sensor.name} at position {sensor.pose.position} "
+            f"with heading {sensor.pose.heading} "
+            f"reads distance {distance_reading} cm, "
+            f"hit point at {hit_point}"
         )
 
     return hit_points
