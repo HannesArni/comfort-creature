@@ -1,0 +1,7 @@
+# Development tools
+black==25.9.0
+ruff==0.14.2
+mypy==1.18.2
+
+# Production dependencies
+# (none yet - will be added as needed)
