@@ -4,33 +4,33 @@
  */
 
 // Background & Base
-export const BACKGROUND = '#1a1d2e'
-export const SURFACE = '#252938'
-export const TEXT_PRIMARY = '#e4e6eb'
-export const TEXT_SECONDARY = '#9ca3af'
+export const BACKGROUND = '#ffffff' // Clean white
+export const SURFACE = '#f6f8fa' // Subtle gray surface
+export const TEXT_PRIMARY = '#1f2328' // Dark gray text
+export const TEXT_SECONDARY = '#636c76' // Medium gray
 
 // Semantic Colors - Robot Navigation
-export const ROBOT = '#3b82f6' // Bright blue - main actor
-export const TARGET = '#10b981' // Emerald green - destination
-export const OBSTACLE = '#ef4444' // Red - warnings/dangers
-export const PATH = '#8b5cf6' // Purple - planned or historical path
-export const SENSOR_RANGE = '#fbbf24' // Amber - sensor cones (use with opacity)
+export const ROBOT = '#0969da' // Bold blue - high visibility main actor
+export const TARGET = '#1a7f37' // Rich green - clear goal indicator
+export const OBSTACLE = '#cf222e' // Bold red - immediate danger recognition
+export const PATH = '#8250df' // Purple - distinct from robot and target
+export const SENSOR_RANGE = '#bf8700' // Deep orange - sensor activity (use with opacity)
 
 // Status Colors
-export const SUCCESS = '#10b981'
-export const WARNING = '#f59e0b'
-export const ERROR = '#ef4444'
-export const INFO = '#3b82f6'
+export const SUCCESS = '#1a7f37' // Rich green - unmistakable success
+export const WARNING = '#bf8700' // Deep orange - attention needed
+export const ERROR = '#cf222e' // Bold red - critical alert
+export const INFO = '#0969da' // Blue - informational
 
 // UI Controls
-export const BUTTON_PRIMARY = '#3b82f6'
-export const BUTTON_PRIMARY_HOVER = '#2563eb'
-export const BUTTON_SECONDARY = '#6b7280'
-export const BUTTON_SECONDARY_HOVER = '#4b5563'
-export const BORDER = '#374151'
+export const BUTTON_PRIMARY = '#1f883d' // Green button
+export const BUTTON_PRIMARY_HOVER = '#1a7f37' // Darker green on hover
+export const BUTTON_SECONDARY = '#e7e9eb' // Light gray
+export const BUTTON_SECONDARY_HOVER = '#d1d4d8' // Darker gray on hover
+export const BORDER = '#d1d9e0' // Clear borders
 
 // Grid & Canvas
-export const GRID_MINOR = '#2d3142'
-export const GRID_MAJOR = '#3d4254'
-export const GRID_ORIGIN = '#4b5563'
-export const GRID_LABEL = '#6b7280'
+export const GRID_MINOR = '#eaeef2' // Subtle light grid
+export const GRID_MAJOR = '#d1d9e0' // More visible major grid lines
+export const GRID_ORIGIN = '#636c76' // Origin crosshair
+export const GRID_LABEL = '#636c76' // Grid coordinate labels
