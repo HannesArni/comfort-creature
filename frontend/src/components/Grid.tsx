@@ -69,7 +69,7 @@ export function Grid({ scale, position, dimensions }: GridProps) {
         <Text
           key={`label-x-${x}`}
           x={x}
-          y={-(visibleTop + labelPadding)}
+          y={(visibleTop + labelPadding)}
           text={x.toString()}
           fontSize={fontSize}
           fill={GRID_LABEL}
@@ -87,7 +87,7 @@ export function Grid({ scale, position, dimensions }: GridProps) {
     lines.push(
       <Line
         key={`h-${y}`}
-        points={[visibleLeft, -y, visibleRight, -y]}
+        points={[visibleLeft, y, visibleRight, y]}
         {...getLineStyle({ isOrigin, isMajor, scale })}
       />
     )
@@ -98,7 +98,7 @@ export function Grid({ scale, position, dimensions }: GridProps) {
         <Text
           key={`label-y-${y}`}
           x={visibleLeft + labelPadding}
-          y={-y}
+          y={y}
           text={y.toString()}
           fontSize={fontSize}
           fill={GRID_LABEL}
