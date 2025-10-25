@@ -25,6 +25,7 @@ export function ZoomableCanvas({ children, onCanvasClick }: ZoomableCanvasProps)
   })
   const stageRef = useRef<Konva.Stage>(null)
   const isDragging = useRef(false)
+  const hasDragged = useRef(false)
   const lastPointerPosition = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export function ZoomableCanvas({ children, onCanvasClick }: ZoomableCanvasProps)
     const clickedOnEmpty = e.target === stage
     if (clickedOnEmpty) {
       isDragging.current = true
+      hasDragged.current = false
       const pos = stage.getPointerPosition()
       if (pos) {
         lastPointerPosition.current = pos
@@ -91,6 +93,9 @@ export function ZoomableCanvas({ children, onCanvasClick }: ZoomableCanvasProps)
   const handleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = stageRef.current
     if (!stage) return
+
+    // Don't trigger click if the user was dragging
+    if (hasDragged.current) return
 
     // Only handle clicks on empty space (the Stage itself)
     const clickedOnEmpty = e.target === stage
@@ -116,6 +121,11 @@ export function ZoomableCanvas({ children, onCanvasClick }: ZoomableCanvasProps)
 
     const dx = pos.x - lastPointerPosition.current.x
     const dy = pos.y - lastPointerPosition.current.y
+
+    // If there's any movement, mark as dragged
+    if (dx !== 0 || dy !== 0) {
+      hasDragged.current = true
+    }
 
     setPosition((prev) => ({
       x: prev.x + dx,

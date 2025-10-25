@@ -11,7 +11,8 @@ import { colors } from './constants/colors'
 // We negate Y coordinates when rendering to flip the axis
 
 function App() {
-  const [image] = useImage('/public/chat-gpt-chair.png')
+  const [image] = useImage('/chat-gpt-chair.png')
+  const [skipasundImage] = useImage('/skipasund-44-layout.jpeg')
   const { robotState, isConnected, error, sendTarget, sendStart } = useRobotWebSocket()
 
   const handleCanvasClick = (worldX: number, worldY: number) => {
@@ -45,6 +46,17 @@ function App() {
       <ZoomableCanvas onCanvasClick={handleCanvasClick}>
         {(scale, position) => (
           <>
+
+            <Layer>
+              <Image
+                image={skipasundImage}
+                x={0}
+                y={0}
+                width={1000 * 1.475}
+                height={800 * 1.5}
+                listening={false}
+              />
+            </Layer>
             <Layer>
               <Grid
                 scale={scale}
@@ -55,6 +67,7 @@ function App() {
                 }}
               />
             </Layer>
+
 
             <Layer>
               {/* Robot/Chair with local coordinate frame */}
@@ -75,18 +88,6 @@ function App() {
                     sensors={robotState.sensors}
                   />
                 </>
-              )}
-              {!robotState?.pose && (
-                <Image
-                  image={image}
-                  x={0}
-                  y={0}
-                  width={80}
-                  height={100}
-                  offsetX={40}
-                  offsetY={50}
-                  rotation={0}
-                />
               )}
 
               {/* Target position if set */}

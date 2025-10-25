@@ -31,8 +31,8 @@ export const colors = {
   BORDER: '#d1d9e0', // Clear borders
 
   // Grid & Canvas
-  GRID_MINOR: '#eaeef2', // Subtle light grid
-  GRID_MAJOR: '#eaeef2', // More visible major grid lines
+  GRID_MINOR: '#cacccf', // Subtle light grid
+  GRID_MAJOR: '#cacccf', // More visible major grid lines
   GRID_ORIGIN: '#636c76', // Origin crosshair
   GRID_LABEL: '#636c76', // Grid coordinate labels
 } as const
