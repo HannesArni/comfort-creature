@@ -1,11 +1,10 @@
 import { Line, Text } from 'react-konva'
 
-
-type GetLineStyleProps = { isOrigin: boolean, isMajor: boolean, scale: number };
-const getLineStyle = ({isOrigin, isMajor, scale}: GetLineStyleProps) => {
+type GetLineStyleProps = { isOrigin: boolean; isMajor: boolean; scale: number }
+const getLineStyle = ({ isOrigin, isMajor, scale }: GetLineStyleProps) => {
   return {
     stroke: isOrigin ? '#666' : isMajor ? '#444' : '#8a8a8a',
-    strokeWidth: isOrigin ? 2 / scale : isMajor ? 1.5 / scale : 0.3 / scale
+    strokeWidth: isOrigin ? 2 / scale : isMajor ? 1.5 / scale : 0.3 / scale,
   }
 }
 
@@ -59,7 +58,7 @@ export function Grid({ scale, position, dimensions }: GridProps) {
       <Line
         key={`v-${x}`}
         points={[x, visibleTop, x, visibleBottom]}
-        {...getLineStyle({isOrigin, isMajor, scale})}
+        {...getLineStyle({ isOrigin, isMajor, scale })}
       />
     )
 
@@ -88,7 +87,7 @@ export function Grid({ scale, position, dimensions }: GridProps) {
       <Line
         key={`h-${y}`}
         points={[visibleLeft, y, visibleRight, y]}
-        {...getLineStyle({isOrigin, isMajor, scale})}
+        {...getLineStyle({ isOrigin, isMajor, scale })}
       />
     )
 

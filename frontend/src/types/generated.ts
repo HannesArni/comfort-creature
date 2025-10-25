@@ -6,21 +6,21 @@
 // See https://github.com/NalyzeSolutions/python_to_typescript_interfaces
 
 export interface GlobalCoordinate {
-    x: number;
-    y: number;
+  x: number
+  y: number
 }
 
 export interface LocalCoordinate {
-    x: number;
-    y: number;
+  x: number
+  y: number
 }
 
 export interface LocalPose {
-    position: LocalCoordinate;
-    heading: number;
+  position: LocalCoordinate
+  heading: number
 }
 
 export interface GlobalPose {
-    position: GlobalCoordinate;
-    heading: number;
+  position: GlobalCoordinate
+  heading: number
 }

@@ -2,10 +2,10 @@ import { Layer, Image } from 'react-konva'
 import './App.css'
 import { ZoomableCanvas } from './components/ZoomableCanvas'
 import { Grid } from './components/Grid'
-import useImage from 'use-image';
+import useImage from 'use-image'
 
 function App() {
-  const [image] = useImage('/public/chat-gpt-chair.png');
+  const [image] = useImage('/public/chat-gpt-chair.png')
 
   return (
     <ZoomableCanvas>
@@ -23,10 +23,18 @@ function App() {
           </Layer>
 
           <Layer>
-            <Image image={image} x={0} y={0} width={80} height={100} offsetX={40} offsetY={50} draggable/>
+            <Image
+              image={image}
+              x={0}
+              y={0}
+              width={80}
+              height={100}
+              offsetX={40}
+              offsetY={50}
+              draggable
+            />
           </Layer>
         </>
-
       )}
     </ZoomableCanvas>
   )

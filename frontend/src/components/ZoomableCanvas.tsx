@@ -62,10 +62,7 @@ export function ZoomableCanvas({ children }: ZoomableCanvasProps) {
     }
 
     const direction = e.evt.deltaY > 0 ? 1 / ZOOM_FACTOR : ZOOM_FACTOR
-    const newScale = Math.max(
-      MIN_SCALE,
-      Math.min(MAX_SCALE, oldScale * direction)
-    )
+    const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, oldScale * direction))
 
     setScale(newScale)
     setPosition({
@@ -89,7 +86,7 @@ export function ZoomableCanvas({ children }: ZoomableCanvasProps) {
     }
   }
 
-  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseMove = () => {
     if (!isDragging.current) return
 
     const stage = stageRef.current
