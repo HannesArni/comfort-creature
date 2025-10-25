@@ -1,16 +1,6 @@
 import math
-from dataclasses import dataclass
 
-from utils import LocalCoordinate, LocalPose
-
-
-@dataclass
-class UltrasonicSensor:
-    """Where is the sensor located on the chair?"""
-
-    pose: LocalPose
-    name: str = "Ultrasonic Sensor"
-
+from geometry import LocalCoordinate, LocalPose, UltrasonicSensor
 
 sensors = [
     UltrasonicSensor(
@@ -18,7 +8,7 @@ sensors = [
         name="Front-Left",
     ),
     UltrasonicSensor(
-        pose=LocalPose(position=LocalCoordinate(30, 30), heading=0), name="Front"
+        pose=LocalPose(position=LocalCoordinate(0, 30), heading=0), name="Front"
     ),
     UltrasonicSensor(
         pose=LocalPose(

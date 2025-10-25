@@ -15,7 +15,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from geometry import GlobalCoordinate, GlobalPose
-from utils.get_ultrasonic_hit_points import get_ultrasonic_hit_points
+from utils.get_ultrasonic_hit_points import get_ultrasonic_hit_points, sensors
 
 app = FastAPI(title="Comfort Creature Visualizer")
 
@@ -108,6 +108,19 @@ async def websocket_endpoint(websocket: WebSocket):
                         ),
                         "obstacles": robot_state.obstacles,
                         "is_running": robot_state.is_running,
+                        "sensors": [
+                            {
+                                "pose": {
+                                    "position": {
+                                        "x": sensor.pose.position.x,
+                                        "y": sensor.pose.position.y,
+                                    },
+                                    "heading": sensor.pose.heading,
+                                },
+                                "name": sensor.name,
+                            }
+                            for sensor in sensors
+                        ],
                     },
                 }
 

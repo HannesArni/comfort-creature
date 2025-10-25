@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import type { UltrasonicSensor } from '../types/generated'
 
 interface RobotState {
   pose: {
@@ -10,6 +11,7 @@ interface RobotState {
   }
   obstacles?: Array<{ x: number; y: number }>
   target?: { x: number; y: number }
+  sensors?: Array<UltrasonicSensor>
 }
 
 interface UseRobotWebSocketResult {

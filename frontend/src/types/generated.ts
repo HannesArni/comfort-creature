@@ -24,3 +24,8 @@ export interface GlobalPose {
   position: GlobalCoordinate
   heading: number
 }
+
+export interface UltrasonicSensor {
+  pose: LocalPose
+  name: string
+}

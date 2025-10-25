@@ -69,7 +69,7 @@ export function Grid({ scale, position, dimensions }: GridProps) {
         <Text
           key={`label-x-${x}`}
           x={x}
-          y={(visibleTop + labelPadding)}
+          y={visibleTop + labelPadding}
           text={x.toString()}
           fontSize={fontSize}
           fill={GRID_LABEL}

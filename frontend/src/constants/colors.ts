@@ -31,6 +31,6 @@ export const BORDER = '#d1d9e0' // Clear borders
 
 // Grid & Canvas
 export const GRID_MINOR = '#eaeef2' // Subtle light grid
-export const GRID_MAJOR = '#d1d9e0' // More visible major grid lines
+export const GRID_MAJOR = '#eaeef2' // More visible major grid lines
 export const GRID_ORIGIN = '#636c76' // Origin crosshair
 export const GRID_LABEL = '#636c76' // Grid coordinate labels

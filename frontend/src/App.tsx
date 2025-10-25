@@ -2,6 +2,7 @@ import { Layer, Image, Circle, Text } from 'react-konva'
 import './App.css'
 import { ZoomableCanvas } from './components/ZoomableCanvas'
 import { Grid } from './components/Grid'
+import { RobotLocalFrame } from './components/RobotLocalFrame'
 import { useRobotWebSocket } from './hooks/useRobotWebSocket'
 import useImage from 'use-image'
 import { SUCCESS, ERROR, TARGET, TEXT_PRIMARY, SURFACE } from './constants/colors'
@@ -56,26 +57,22 @@ function App() {
             </Layer>
 
             <Layer>
-              {/* Robot/Chair - position from WebSocket or default */}
+              {/* Robot/Chair with local coordinate frame */}
               {robotState?.pose && (
                 <>
                   {/* Debug: Heading text */}
                   <Text
                     x={robotState.pose.position.x}
-                    y={-robotState.pose.position.y - 80}
+                    y={-(robotState.pose.position.y + 70)}
                     text={`Heading: ${robotState.pose.heading.toFixed(2)} rad (${((robotState.pose.heading * 180) / Math.PI).toFixed(0)}°)`}
                     fontSize={14 / scale}
                     fill={TEXT_PRIMARY}
                   />
-                  <Image
+                  {/* Robot and local frame elements */}
+                  <RobotLocalFrame
+                    pose={robotState.pose}
                     image={image}
-                    x={robotState.pose.position.x}
-                    y={-robotState.pose.position.y}
-                    width={80}
-                    height={100}
-                    offsetX={40}
-                    offsetY={50}
-                    rotation={-robotState.pose.heading * (180 / Math.PI) + 180}
+                    sensors={robotState.sensors}
                   />
                 </>
               )}
@@ -105,7 +102,7 @@ function App() {
                   <Text
                     x={robotState.target.x}
                     y={-robotState.target.y - 20 / scale}
-                    text={`Target (${robotState.target.x.toFixed(2)}, ${robotState.target.y.toFixed(2)})`}
+                    text={`Target`}
                     fontSize={12 / scale}
                     fill={TARGET}
                   />
