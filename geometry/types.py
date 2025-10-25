@@ -1,9 +1,11 @@
 import math
 from dataclasses import dataclass
 
+from python_to_typescript_interfaces import Interface
+
 
 @dataclass
-class GlobalCoordinate:
+class GlobalCoordinate(Interface):
     """
     Global/world 2D coordinate with x and y values.
     """
@@ -36,7 +38,7 @@ class GlobalCoordinate:
 
 
 @dataclass
-class LocalCoordinate:
+class LocalCoordinate(Interface):
     """
     Local coordinate relative to robot/chair position.
     x: right/left relative to robot
@@ -67,7 +69,7 @@ class LocalCoordinate:
 
 
 @dataclass
-class LocalPose:
+class LocalPose(Interface):
     """
     Position and orientation in local coordinates (relative to robot).
     """
@@ -87,7 +89,7 @@ class LocalPose:
 
 
 @dataclass
-class GlobalPose:
+class GlobalPose(Interface):
     """
     Robot/chair position and orientation in global coordinates.
     """

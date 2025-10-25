@@ -2,6 +2,10 @@
 black==25.9.0
 ruff==0.14.2
 mypy==1.18.2
+python-to-typescript-interfaces==0.2.0
+pre-commit==4.0.1
 
 # Production dependencies
-# (none yet - will be added as needed)
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+websockets==13.1
