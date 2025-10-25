@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, ReactNode } from 'react'
 import { Stage } from 'react-konva'
 import Konva from 'konva'
-import { BACKGROUND } from '../constants/colors'
+import { colors } from '../constants/colors'
 
 const ZOOM_FACTOR = 1.05
 const MIN_SCALE = 0.1
@@ -130,7 +130,7 @@ export function ZoomableCanvas({ children, onCanvasClick }: ZoomableCanvasProps)
   }
 
   return (
-    <div style={{ backgroundColor: BACKGROUND, width: '100%', height: '100%' }}>
+    <div style={{ backgroundColor: colors.BACKGROUND, width: '100%', height: '100%' }}>
       <Stage
         ref={stageRef}
         width={dimensions.width}

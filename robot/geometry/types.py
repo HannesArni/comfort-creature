@@ -111,3 +111,14 @@ class GlobalPose(Interface):
         local_heading = self.heading - reference_pose.heading
 
         return LocalPose(local_position, local_heading)
+
+
+@dataclass
+class UltrasonicSensor(Interface):
+    """
+    Ultrasonic sensor configuration.
+    Describes where a sensor is mounted on the robot.
+    """
+
+    pose: LocalPose  # Sensor position and orientation relative to robot
+    name: str  # Human-readable sensor name (e.g., "Front-Left")

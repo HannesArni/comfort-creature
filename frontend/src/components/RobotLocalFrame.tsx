@@ -1,13 +1,13 @@
 import { Group, Image, Circle, Line } from 'react-konva'
 import type { GlobalPose, UltrasonicSensor } from '../types/generated'
-import { SENSOR_RANGE } from '../constants/colors'
+import { colors } from '../constants/colors'
 
 interface RobotLocalFrameProps {
   pose: GlobalPose
   image?: HTMLImageElement
   sensors?: UltrasonicSensor[]
 }
-const ULTRASONIC_SENSOR_RANGE=400
+const ULTRASONIC_SENSOR_RANGE = 400
 
 /**
  * RobotLocalFrame - A coordinate system group centered on the robot
@@ -46,7 +46,7 @@ export function RobotLocalFrame({ pose, image, sensors }: RobotLocalFrameProps) 
             x={sensor.pose.position.x}
             y={-sensor.pose.position.y}
             radius={2}
-            fill={SENSOR_RANGE}
+            fill={colors.SENSOR_RANGE}
             opacity={0.7}
           />
 
@@ -55,11 +55,15 @@ export function RobotLocalFrame({ pose, image, sensors }: RobotLocalFrameProps) 
             points={[
               sensor.pose.position.x,
               -sensor.pose.position.y,
-              sensor.pose.position.x + ULTRASONIC_SENSOR_RANGE * Math.sin(sensor.pose.heading),
-              -(sensor.pose.position.y + ULTRASONIC_SENSOR_RANGE * Math.cos(sensor.pose.heading)),
+              sensor.pose.position.x +
+                ULTRASONIC_SENSOR_RANGE * Math.sin(sensor.pose.heading),
+              -(
+                sensor.pose.position.y +
+                ULTRASONIC_SENSOR_RANGE * Math.cos(sensor.pose.heading)
+              ),
             ]}
-            stroke={SENSOR_RANGE}
-            strokeWidth={.7}
+            stroke={colors.SENSOR_RANGE}
+            strokeWidth={0.7}
             opacity={1}
           />
         </Group>
