@@ -4,6 +4,7 @@ import { ZoomableCanvas } from './components/ZoomableCanvas'
 import { Grid } from './components/Grid'
 import { useRobotWebSocket } from './hooks/useRobotWebSocket'
 import useImage from 'use-image'
+import { SUCCESS, ERROR, TARGET, TEXT_PRIMARY, SURFACE } from './constants/colors'
 
 // Note: Canvas uses Y-down, Robot uses Y-up
 // We negate Y coordinates when rendering to flip the axis
@@ -27,15 +28,17 @@ function App() {
           top: 10,
           right: 10,
           padding: '8px 16px',
-          background: isConnected ? '#4caf50' : '#f44336',
-          color: 'white',
-          borderRadius: 4,
+          background: SURFACE,
+          color: TEXT_PRIMARY,
+          borderRadius: 8,
           fontSize: 14,
           zIndex: 1000,
+          border: `2px solid ${isConnected ? SUCCESS : ERROR}`,
         }}
       >
-        {isConnected ? '● Connected' : '● Disconnected'}
-        {error && <div style={{ fontSize: 12 }}>{error}</div>}
+        <span style={{ color: isConnected ? SUCCESS : ERROR }}>●</span>{' '}
+        {isConnected ? 'Connected' : 'Disconnected'}
+        {error && <div style={{ fontSize: 12, color: ERROR }}>{error}</div>}
       </div>
 
       <ZoomableCanvas onCanvasClick={handleCanvasClick}>
@@ -62,9 +65,7 @@ function App() {
                     y={-robotState.pose.position.y - 80}
                     text={`Heading: ${robotState.pose.heading.toFixed(2)} rad (${((robotState.pose.heading * 180) / Math.PI).toFixed(0)}°)`}
                     fontSize={14 / scale}
-                    fill="white"
-                    stroke="black"
-                    strokeWidth={1 / scale}
+                    fill={TEXT_PRIMARY}
                   />
                   <Image
                     image={image}
@@ -97,8 +98,8 @@ function App() {
                   <Circle
                     x={robotState.target.x}
                     y={-robotState.target.y}
-                    radius={10 / scale}
-                    stroke="green"
+                    radius={5 / scale}
+                    fill={TARGET}
                     strokeWidth={2 / scale}
                   />
                   <Text
@@ -106,22 +107,10 @@ function App() {
                     y={-robotState.target.y - 20 / scale}
                     text={`Target (${robotState.target.x.toFixed(2)}, ${robotState.target.y.toFixed(2)})`}
                     fontSize={12 / scale}
-                    fill="green"
+                    fill={TARGET}
                   />
                 </>
               )}
-
-              {/* Obstacles if any */}
-              {robotState?.obstacles?.map((obstacle, i) => (
-                <Circle
-                  key={`obstacle-${i}`}
-                  x={obstacle.x}
-                  y={-obstacle.y}
-                  radius={5 / scale}
-                  fill="red"
-                  opacity={0.6}
-                />
-              ))}
             </Layer>
           </>
         )}

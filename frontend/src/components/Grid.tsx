@@ -1,9 +1,10 @@
 import { Line, Text } from 'react-konva'
+import { GRID_ORIGIN, GRID_MAJOR, GRID_MINOR, GRID_LABEL } from '../constants/colors'
 
 type GetLineStyleProps = { isOrigin: boolean; isMajor: boolean; scale: number }
 const getLineStyle = ({ isOrigin, isMajor, scale }: GetLineStyleProps) => {
   return {
-    stroke: isOrigin ? '#666' : isMajor ? '#444' : '#8a8a8a',
+    stroke: isOrigin ? GRID_ORIGIN : isMajor ? GRID_MAJOR : GRID_MINOR,
     strokeWidth: isOrigin ? 2 / scale : isMajor ? 1.5 / scale : 0.3 / scale,
   }
 }
@@ -71,7 +72,7 @@ export function Grid({ scale, position, dimensions }: GridProps) {
           y={-(visibleTop + labelPadding)}
           text={x.toString()}
           fontSize={fontSize}
-          fill="#888"
+          fill={GRID_LABEL}
           align="center"
           offsetX={fontSize * 1.5}
         />
@@ -100,7 +101,7 @@ export function Grid({ scale, position, dimensions }: GridProps) {
           y={-y}
           text={y.toString()}
           fontSize={fontSize}
-          fill="#888"
+          fill={GRID_LABEL}
           align="left"
           offsetY={fontSize / 2}
         />
