@@ -22,6 +22,6 @@ repos:
         name: Generate TypeScript Types
         entry: bash scripts/generate_and_stage_types.sh
         language: system
-        files: ^geometry/.*\.py$
+        files: ^robot/geometry/.*\.py$
         pass_filenames: false
         stages: [pre-commit]
