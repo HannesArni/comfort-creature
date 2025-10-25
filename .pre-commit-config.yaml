@@ -1,0 +1,27 @@
+# Pre-commit hooks for Comfort Creature
+# See https://pre-commit.com for more information
+
+repos:
+  # Python code quality
+  - repo: https://github.com/psf/black
+    rev: 25.9.0
+    hooks:
+      - id: black
+        language_version: python3
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.2
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+  # TypeScript type generation
+  - repo: local
+    hooks:
+      - id: generate-typescript-types
+        name: Generate TypeScript Types
+        entry: bash scripts/generate_and_stage_types.sh
+        language: system
+        files: ^geometry/.*\.py$
+        pass_filenames: false
+        stages: [pre-commit]
