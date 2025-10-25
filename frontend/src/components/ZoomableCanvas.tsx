@@ -8,9 +8,10 @@ const MAX_SCALE = 10
 
 interface ZoomableCanvasProps {
   children: (scale: number, position: { x: number; y: number }) => ReactNode
+  onCanvasClick?: (worldX: number, worldY: number) => void
 }
 
-export function ZoomableCanvas({ children }: ZoomableCanvasProps) {
+export function ZoomableCanvas({ children, onCanvasClick }: ZoomableCanvasProps) {
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -86,6 +87,23 @@ export function ZoomableCanvas({ children }: ZoomableCanvasProps) {
     }
   }
 
+  const handleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const stage = stageRef.current
+    if (!stage) return
+
+    // Only handle clicks on empty space (the Stage itself)
+    const clickedOnEmpty = e.target === stage
+    if (clickedOnEmpty && onCanvasClick) {
+      const pos = stage.getPointerPosition()
+      if (pos) {
+        // Convert screen coordinates to world coordinates (canvas Y-down system)
+        const worldX = (pos.x - position.x) / scale
+        const worldY = -(pos.y - position.y) / scale
+        onCanvasClick(worldX, worldY)
+      }
+    }
+  }
+
   const handleMouseMove = () => {
     if (!isDragging.current) return
 
@@ -123,6 +141,7 @@ export function ZoomableCanvas({ children }: ZoomableCanvasProps) {
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onClick={handleClick}
     >
       {children(scale, position)}
     </Stage>

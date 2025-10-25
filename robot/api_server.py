@@ -95,8 +95,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     "type": "state_update",
                     "data": {
                         "pose": {
-                            "x": robot_state.pose.coordinate.x,
-                            "y": robot_state.pose.coordinate.y,
+                            "position": {
+                                "x": robot_state.pose.position.x,
+                                "y": robot_state.pose.position.y,
+                            },
                             "heading": robot_state.pose.heading,
                         },
                         "target": (
@@ -188,20 +190,20 @@ async def simulate_robot_movement():
     while True:
         if robot_state.is_running and robot_state.target:
             # Simple simulation: move toward target
-            dx = robot_state.target.x - robot_state.pose.coordinate.x
-            dy = robot_state.target.y - robot_state.pose.coordinate.y
+            dx = robot_state.target.x - robot_state.pose.position.x
+            dy = robot_state.target.y - robot_state.pose.position.y
             distance = math.sqrt(dx**2 + dy**2)
 
             if distance > 1.0:  # Still moving
                 # Update heading to face target
-                robot_state.pose.heading = math.atan2(dx, dy)
+                robot_state.pose.heading = math.atan2(dx, dy) * -1
 
                 # Move forward at 10 cm/s
                 speed = 10.0  # cm/s
                 step = speed * 0.1  # 10 Hz update
 
-                new_x = robot_state.pose.coordinate.x + (dx / distance) * step
-                new_y = robot_state.pose.coordinate.y + (dy / distance) * step
+                new_x = robot_state.pose.position.x + (dx / distance) * step
+                new_y = robot_state.pose.position.y + (dy / distance) * step
                 robot_state.pose = GlobalPose(
                     GlobalCoordinate(new_x, new_y), robot_state.pose.heading
                 )

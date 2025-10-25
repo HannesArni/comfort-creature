@@ -42,11 +42,5 @@ def get_ultrasonic_hit_points() -> list[LocalCoordinate]:
 
         hit_point = sensor.pose.position.move(x_translation, y_translation)
         hit_points.append(hit_point)
-        print(
-            f"Sensor {sensor.name} at position {sensor.pose.position} "
-            f"with heading {sensor.pose.heading} "
-            f"reads distance {distance_reading} cm, "
-            f"hit point at {hit_point}"
-        )
 
     return hit_points
