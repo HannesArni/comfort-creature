@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { Layer, Rect } from 'react-konva'
+import { Layer, Image } from 'react-konva'
 import './App.css'
 import { ZoomableCanvas } from './components/ZoomableCanvas'
 import { Grid } from './components/Grid'
+import useImage from 'use-image';
 
 function App() {
-  const [rectPosition, setRectPosition] = useState({ x: 0, y: 0 })
+  const [image] = useImage('/public/chat-gpt-chair.png');
 
   return (
     <ZoomableCanvas>
@@ -21,19 +21,13 @@ function App() {
               }}
             />
           </Layer>
-        </>
-      )}
 
-      <Layer>
-        <Rect
-          x={rectPosition.x}
-          y={rectPosition.y}
-          width={80}
-          height={80}
-          fill="black"
-          draggable
-        />
-      </Layer>
+          <Layer>
+            <Image image={image} x={0} y={0} width={80} height={100} offsetX={40} offsetY={50} draggable/>
+          </Layer>
+        </>
+
+      )}
     </ZoomableCanvas>
   )
 }
