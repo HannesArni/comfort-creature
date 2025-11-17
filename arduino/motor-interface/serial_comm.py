@@ -15,7 +15,7 @@ def find_arduino_port():
     common_ports = [
         "/dev/cu.usbmodem14101",
         "/dev/cu.usbmodem141101",
-        "/dev/ttyUSB0",
+        "/dev/ttyUSB1",
         "/dev/ttyACM0",
         "/dev/cu.usbserial",
     ]

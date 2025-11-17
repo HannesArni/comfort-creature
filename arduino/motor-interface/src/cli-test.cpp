@@ -1,28 +1,37 @@
 #include <Arduino.h>
 #include "motor.cpp"
-
+#include "command_processor.h"
 
 Motor left_motor(5);
 Motor right_motor(6);
+CommandProcessor cmdProcessor(left_motor, right_motor);
 
+String inputBuffer = "";
 
-void interrupt() {
-    Serial.println("Hello");
-}
-
-
-// the setup function runs once when you press reset or power the board
 void setup() {
-  // initialize digital pin LED_BUILTIN as an output.
   left_motor.init();
   right_motor.init();
-  attachInterrupt(digitalPinToInterrupt(2), interrupt, RISING);
-  pinMode(2, INPUT);
+
   Serial.begin(9600);
+  Serial.println("Motor CLI ready");
+  Serial.println("Type 'help' for available commands");
 }
 
-// the loop function runs over and over again forever
 void loop() {
-  Serial.println(digitalRead(2));
-  delay(1000);
+  while (Serial.available() > 0) {
+    char inChar = (char)Serial.read();
+
+    if (inChar == '\n' || inChar == '\r') {
+      if (inputBuffer.length() > 0) {
+        cmdProcessor.processCommand(inputBuffer);
+        inputBuffer = "";
+      }
+    } else {
+      inputBuffer += inChar;
+    }
+  }
+
+  cmdProcessor.checkTimeout();
+
+  delay(10);
 }

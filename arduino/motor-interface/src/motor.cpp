@@ -117,4 +117,8 @@ class Motor {
         //     pinMode(HALL_PINS[i], INPUT);
         // }
     }
+
+    void setSpeed(int speed) {
+        analogWrite(MOTOR_PIN, speed)
+    }
 };
