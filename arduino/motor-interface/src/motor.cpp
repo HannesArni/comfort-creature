@@ -104,17 +104,17 @@ class Motor {
         int MOTOR_PIN;
         int HALL_PINS[3];
 
-    Motor(int motor_pin, int hall_pins[3]) {
+    Motor(int motor_pin) {
         MOTOR_PIN = motor_pin;
-        for (int i = 0; i < 3; i++) {
-            HALL_PINS[i] = hall_pins[i];
-        }
+        // for (int i = 0; i < 3; i++) {
+        //     HALL_PINS[i] = hall_pins[i];
+        // }
     }
 
     void init() {
         pinMode(MOTOR_PIN, OUTPUT);
-        for (int i = 0; i < 3; i++) {
-            pinMode(HALL_PINS[i], INPUT);
-        }
+        // for (int i = 0; i < 3; i++) {
+        //     pinMode(HALL_PINS[i], INPUT);
+        // }
     }
 };

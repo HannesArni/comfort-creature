@@ -14,7 +14,7 @@ from typing import List
 import serial
 from dump_parsing import parse_dump_file
 
-PORT = "/dev/ttyUSB0"
+PORT = "/dev/ttyUSB1"
 BAUD_RATE = 115200
 START_BYTE = 0xAA
 

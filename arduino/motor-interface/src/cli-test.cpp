@@ -2,8 +2,14 @@
 #include "motor.cpp"
 
 
-Motor left_motor(5, {2, 3, 10});
-Motor right_motor(6, {7, 8, 9});
+Motor left_motor(5);
+Motor right_motor(6);
+
+
+void interrupt() {
+    Serial.println("Hello");
+}
+
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -19,8 +25,4 @@ void setup() {
 void loop() {
   Serial.println(digitalRead(2));
   delay(1000);
-}
-
-void interrupt() {
-    Serial.println("Hello");
 }
