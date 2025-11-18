@@ -12,6 +12,7 @@ interface RobotState {
   obstacles?: Array<{ x: number; y: number }>
   target?: { x: number; y: number }
   sensors?: Array<UltrasonicSensor>
+  motor_speeds?: { left: number; right: number }
 }
 
 interface UseRobotWebSocketResult {
@@ -21,6 +22,13 @@ interface UseRobotWebSocketResult {
   sendTarget: (x: number, y: number) => void
   sendStart: () => void
   sendStop: () => void
+  sendMotor: (
+    motor: 'left' | 'right' | 'both',
+    speed: number,
+    leftSpeed?: number,
+    rightSpeed?: number
+  ) => void
+  stopMotors: () => void
 }
 
 const WS_URL = 'ws://localhost:8000/ws'
@@ -118,6 +126,38 @@ export function useRobotWebSocket(): UseRobotWebSocketResult {
     sendMessage({ type: 'stop' })
   }, [sendMessage])
 
+  const sendMotor = useCallback(
+    (
+      motor: 'left' | 'right' | 'both',
+      speed: number,
+      leftSpeed?: number,
+      rightSpeed?: number
+    ) => {
+      const data: {
+        motor: string
+        speed: number
+        left_speed?: number
+        right_speed?: number
+      } = {
+        motor,
+        speed,
+      }
+      if (motor === 'both' && leftSpeed !== undefined && rightSpeed !== undefined) {
+        data.left_speed = leftSpeed
+        data.right_speed = rightSpeed
+      }
+      sendMessage({
+        type: 'set_motor',
+        data,
+      })
+    },
+    [sendMessage]
+  )
+
+  const stopMotors = useCallback(() => {
+    sendMessage({ type: 'stop' })
+  }, [sendMessage])
+
   return {
     robotState,
     isConnected,
@@ -125,5 +165,7 @@ export function useRobotWebSocket(): UseRobotWebSocketResult {
     sendTarget,
     sendStart,
     sendStop,
+    sendMotor,
+    stopMotors,
   }
 }

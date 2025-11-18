@@ -56,10 +56,10 @@ export function RobotLocalFrame({ pose, image, sensors }: RobotLocalFrameProps) 
               sensor.pose.position.x,
               -sensor.pose.position.y,
               sensor.pose.position.x +
-                ULTRASONIC_SENSOR_RANGE * Math.sin(sensor.pose.heading),
+                ULTRASONIC_SENSOR_RANGE * Math.sin(sensor.pose.heading * -1),
               -(
                 sensor.pose.position.y +
-                ULTRASONIC_SENSOR_RANGE * Math.cos(sensor.pose.heading)
+                ULTRASONIC_SENSOR_RANGE * Math.cos(sensor.pose.heading * -1)
               ),
             ]}
             stroke={colors.SENSOR_RANGE}
