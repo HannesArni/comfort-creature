@@ -216,6 +216,10 @@ async def websocket_endpoint(websocket: WebSocket):
         await asyncio.gather(send_state_updates(), receive_commands())
     except WebSocketDisconnect:
         print("WebSocket client disconnected")
+        # Stop motors on disconnect for safety
+        if motor_controller:
+            motor_controller.stop()
+            robot_state.motor_speeds = {"left": 0, "right": 0}
 
 
 # --- Background Tasks (Simulation) ---
@@ -230,7 +234,6 @@ async def startup_event():
     motor_controller = MotorController()
     if motor_controller.connect():
         print("Motor controller connected successfully")
-        asyncio.create_task(motor_keepalive_task())
     else:
         print("Running without motor controller (simulation mode)")
         motor_controller = None
@@ -242,18 +245,6 @@ async def shutdown_event():
     global motor_controller
     if motor_controller:
         motor_controller.disconnect()
-
-
-async def motor_keepalive_task():
-    """
-    Send periodic commands to Arduino to prevent timeout.
-
-    Arduino stops motors after 1 second of no commands for safety.
-    """
-    while True:
-        if motor_controller and robot_state.is_running:
-            motor_controller.keep_alive()
-        await asyncio.sleep(0.5)  # Send keepalive every 500ms
 
 
 if __name__ == "__main__":
