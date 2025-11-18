@@ -4,17 +4,15 @@ from geometry import LocalCoordinate, LocalPose, UltrasonicSensor
 
 sensors = [
     UltrasonicSensor(
-        pose=LocalPose(position=LocalCoordinate(30, 30), heading=math.radians(45)),
-        name="Front-Left",
+        pose=LocalPose(position=LocalCoordinate(30, 30), heading=math.radians(-45)),
+        name="Front-Right",
     ),
     UltrasonicSensor(
         pose=LocalPose(position=LocalCoordinate(0, 30), heading=0), name="Front"
     ),
     UltrasonicSensor(
-        pose=LocalPose(
-            position=LocalCoordinate(-30, 30), heading=math.radians(365 - 45)
-        ),
-        name="Front-Right",
+        pose=LocalPose(position=LocalCoordinate(-30, 30), heading=math.radians(45)),
+        name="Front-Left",
     ),
 ]
 

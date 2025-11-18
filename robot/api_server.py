@@ -8,7 +8,6 @@ Uses WebSocket for bidirectional communication:
 
 import asyncio
 import json
-import math
 from typing import Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -16,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from geometry import GlobalCoordinate, GlobalPose
 from utils.get_ultrasonic_hit_points import get_ultrasonic_hit_points, sensors
+from utils.motor_controller import MotorController
 
 app = FastAPI(title="Comfort Creature Visualizer")
 
@@ -37,12 +37,14 @@ class RobotState:
 
     def __init__(self):
         self.pose = GlobalPose(GlobalCoordinate(0.0, 0.0), 0.0)
-        self.target: Optional[GlobalCoordinate] = None
+        self.target: Optional[GlobalCoordinate] = GlobalCoordinate(100, 100)
         self.obstacles: list[dict] = []
-        self.is_running = False
+        self.is_running = True
+        self.motor_speeds = {"left": 0, "right": 0}  # Current motor speeds
 
 
 robot_state = RobotState()
+motor_controller: Optional[MotorController] = None
 
 
 # --- REST Endpoints (minimal, just health check) ---
@@ -108,6 +110,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         ),
                         "obstacles": robot_state.obstacles,
                         "is_running": robot_state.is_running,
+                        "motor_speeds": robot_state.motor_speeds,
                         "sensors": [
                             {
                                 "pose": {
@@ -159,10 +162,43 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 elif command_type == "stop":
                     robot_state.is_running = False
+                    if motor_controller:
+                        motor_controller.stop()
                     print("Robot stopped")
                     await websocket.send_json(
                         {"type": "command_ack", "command": "stop"}
                     )
+
+                elif command_type == "set_motor":
+                    motor_data = data.get("data", {})
+                    motor = motor_data.get("motor")  # "left", "right", or "both"
+                    speed = motor_data.get("speed", 0)
+
+                    if motor_controller:
+                        if motor == "left":
+                            motor_controller.set_left_motor(speed)
+                            robot_state.motor_speeds["left"] = speed
+                        elif motor == "right":
+                            motor_controller.set_right_motor(speed)
+                            robot_state.motor_speeds["right"] = speed
+                        elif motor == "both":
+                            left_speed = motor_data.get("left_speed", speed)
+                            right_speed = motor_data.get("right_speed", speed)
+                            motor_controller.set_both_motors(left_speed, right_speed)
+                            robot_state.motor_speeds["left"] = left_speed
+                            robot_state.motor_speeds["right"] = right_speed
+
+                        print(f"Motor {motor} set to {speed}")
+                        await websocket.send_json(
+                            {"type": "command_ack", "command": "set_motor"}
+                        )
+                    else:
+                        await websocket.send_json(
+                            {
+                                "type": "error",
+                                "message": "Motor controller not connected",
+                            }
+                        )
 
                 else:
                     print(f"Unknown command type: {command_type}")
@@ -188,44 +224,36 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.on_event("startup")
 async def startup_event():
     """Start background tasks when server starts"""
-    asyncio.create_task(simulate_robot_movement())
+    global motor_controller
+
+    # Try to connect to motor controller
+    motor_controller = MotorController()
+    if motor_controller.connect():
+        print("Motor controller connected successfully")
+        asyncio.create_task(motor_keepalive_task())
+    else:
+        print("Running without motor controller (simulation mode)")
+        motor_controller = None
 
 
-async def simulate_robot_movement():
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up when server shuts down"""
+    global motor_controller
+    if motor_controller:
+        motor_controller.disconnect()
+
+
+async def motor_keepalive_task():
     """
-    Simulate robot movement for testing.
+    Send periodic commands to Arduino to prevent timeout.
 
-    In production, this would be replaced with actual motor control
-    and sensor integration.
+    Arduino stops motors after 1 second of no commands for safety.
     """
-    await asyncio.sleep(1)  # Wait for server to fully start
-
     while True:
-        if robot_state.is_running and robot_state.target:
-            # Simple simulation: move toward target
-            dx = robot_state.target.x - robot_state.pose.position.x
-            dy = robot_state.target.y - robot_state.pose.position.y
-            distance = math.sqrt(dx**2 + dy**2)
-
-            if distance > 1.0:  # Still moving
-                # Update heading to face target
-                robot_state.pose.heading = math.atan2(dx, dy) * -1
-
-                # Move forward at 10 cm/s
-                speed = 10.0  # cm/s
-                step = speed * 0.1  # 10 Hz update
-
-                new_x = robot_state.pose.position.x + (dx / distance) * step
-                new_y = robot_state.pose.position.y + (dy / distance) * step
-                robot_state.pose = GlobalPose(
-                    GlobalCoordinate(new_x, new_y), robot_state.pose.heading
-                )
-            else:
-                # Reached target
-                robot_state.is_running = False
-                print("Target reached!")
-
-        await asyncio.sleep(0.1)  # 10 Hz control loop
+        if motor_controller and robot_state.is_running:
+            motor_controller.keep_alive()
+        await asyncio.sleep(0.5)  # Send keepalive every 500ms
 
 
 if __name__ == "__main__":
