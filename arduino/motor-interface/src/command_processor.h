@@ -2,7 +2,6 @@
 #define COMMAND_PROCESSOR_H
 
 #include <Arduino.h>
-#include "motor.cpp"
 
 class CommandProcessor {
 private:
@@ -63,9 +62,9 @@ public:
     }
     else if (cmd == "status") {
       Serial.print("Left motor: ");
-      Serial.println(left_motor.get_speed());
+      Serial.println(left_motor.speed);
       Serial.print("Right motor: ");
-      Serial.println(right_motor.get_speed());
+      Serial.println(right_motor.speed);
     }
     else if (cmd == "help") {
       Serial.println("Available commands:");
@@ -85,7 +84,7 @@ public:
 
   void checkTimeout() {
     if (millis() - lastCommandTime > TIMEOUT_MS) {
-      if (left_motor.get_speed() != 0 || right_motor.get_speed() != 0) {
+      if (left_motor.speed != 0 || right_motor.speed != 0) {
         left_motor.set_speed(0);
         right_motor.set_speed(0);
         Serial.println("Timeout: Motors stopped");

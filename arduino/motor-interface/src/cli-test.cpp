@@ -33,5 +33,5 @@ void loop() {
 
   cmdProcessor.checkTimeout();
 
-  delay(10);
+  delay(2);
 }
