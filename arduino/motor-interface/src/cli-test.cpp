@@ -2,15 +2,26 @@
 #include "motor.cpp"
 #include "command_processor.h"
 
-Motor left_motor(5);
-Motor right_motor(6);
+int LEFT_HALL_SENSORS[3] ={10, 3, 4};
+Motor left_motor("LEFT", 5, LEFT_HALL_SENSORS);
+int RIGHT_HALL_SENSORS[3] ={9, 8, 9};
+Motor right_motor("RIGHT",  6, RIGHT_HALL_SENSORS);
+
 CommandProcessor cmdProcessor(left_motor, right_motor);
 
 String inputBuffer = "";
 
+void interrupt_test() {
+    Serial.println("Interrupt");
+}
+
 void setup() {
-  left_motor.init();
-  right_motor.init();
+    left_motor.init();
+    right_motor.init();
+
+//     for (int i = 0; i < 3; i++) {
+//         attachInterrupt(digitalPinToInterrupt(left_motor.HALL_PINS[i]), interrupt_test, RISING);
+//     }
 
   Serial.begin(9600);
   Serial.println("Motor CLI ready");
@@ -32,6 +43,8 @@ void loop() {
   }
 
   cmdProcessor.checkTimeout();
+  left_motor.check_halls();
+  right_motor.check_halls();
 
   delay(2);
 }
