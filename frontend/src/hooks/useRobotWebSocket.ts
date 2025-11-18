@@ -31,7 +31,7 @@ interface UseRobotWebSocketResult {
   stopMotors: () => void
 }
 
-const WS_URL = 'ws://localhost:8000/ws'
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
 const RECONNECT_DELAY = 1_000
 
 export function useRobotWebSocket(): UseRobotWebSocketResult {
