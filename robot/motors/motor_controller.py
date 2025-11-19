@@ -18,7 +18,7 @@ from utils import config
 @dataclass
 class Motor:
     count: int
-    position: LocalCoordinate = LocalCoordinate(0.0, 0.0)
+    position: LocalCoordinate
 
 
 class MotorController:
