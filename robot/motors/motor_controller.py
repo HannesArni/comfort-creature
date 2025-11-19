@@ -13,6 +13,7 @@ import serial
 
 from geometry import GlobalCoordinate, GlobalPose, LocalCoordinate
 from motors.parse_encoder_line import parse_encoder_line
+from motors.transform_on_encoder import transform_on_encoder
 from utils import config
 
 
@@ -79,12 +80,10 @@ class MotorController:
             reading = parse_encoder_line(line)
             if not reading:
                 continue
-            # If the left motor only goes forward, we pivot around the right
-            # If the right motor only goes forward, we pivot around the left
-            # if reading.motor == MotorSide.LEFT:
-            #
-            # elif reading.motor == MotorSide.RIGHT:
-            #     self.right.count = reading.count
+
+            self.pose = transform_on_encoder(
+                reading, self.pose, reading, self.left, self.right
+            )
 
     def set_left_motor(self, speed: int):
         speed = max(0, min(255, speed))  # Clamp to valid range
