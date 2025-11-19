@@ -7,12 +7,10 @@ Uses the command protocol defined in motor-interface CLI.
 
 import time
 from dataclasses import dataclass
-from typing import Optional
-
-import serial
 
 from geometry import GlobalCoordinate, GlobalPose, LocalCoordinate
 from motors.parse_encoder_line import parse_encoder_line
+from motors.serial_protocol import SerialProtocol
 from motors.transform_on_encoder import transform_on_encoder
 from utils import config
 
@@ -26,100 +24,95 @@ class Motor:
 class MotorController:
     """Controls differential drive motors via serial communication with Arduino."""
 
-    ser: Optional[serial.Serial]
-    left: Motor = Motor(count=0, position=LocalCoordinate(-30, 30))
-    right: Motor = Motor(count=0, position=LocalCoordinate(30, 30))
-    pose: GlobalPose = GlobalPose(GlobalCoordinate(0.0, 0.0), 0.0)
-
     def __init__(self):
+        self.left: Motor = Motor(count=0, position=LocalCoordinate(-30, 30))
+        self.right: Motor = Motor(count=0, position=LocalCoordinate(30, 30))
+        self.pose: GlobalPose = GlobalPose(GlobalCoordinate(0.0, 0.0), 0.0)
         self._last_command_time = time.time()
+        self.protocol = SerialProtocol(on_line=self._handle_serial_line)
 
-    def connect(self):
-        self.ser = serial.Serial(
-            config.arduino_port, config.arduino_baud_rate, timeout=1
+    async def connect(self) -> bool:
+        """
+        Establish async serial connection to Arduino.
+
+        Returns:
+            True if connection successful, False otherwise
+        """
+        return await self.protocol.connect(
+            config.arduino_port, config.arduino_baud_rate
         )
-        time.sleep(2)  # Wait for Arduino to reset
-        print(f"Connected to Arduino on {self.port}")
 
     def disconnect(self):
         """Close serial connection."""
-        if self.ser and self.ser.is_open:
-            self.stop()  # Safety: stop motors before disconnecting
-            self.ser.close()
+        if self.protocol.is_connected():
+            self.stop_sync()  # Safety: stop motors before disconnecting
+            self.protocol.close()
             print("Disconnected from Arduino")
 
-    def _send_command(self, command: str):
+    def is_connected(self) -> bool:
+        """Check if connected to Arduino."""
+        return self.protocol.is_connected()
+
+    async def _send_command(self, command: str):
         """
-        Send command to Arduino.
+        Send command to Arduino asynchronously.
 
         Args:
             command: Command string (e.g., "left 255", "stop")
         """
-        if not self.ser or not self.ser.is_open:
-            print("Error: Not connected to Arduino")
-            return
+        self.protocol.send_command(command)
+        self._last_command_time = time.time()
 
-        try:
-            self.ser.write(f"{command}\n".encode())
-            self._last_command_time = time.time()
-            # Read response (if any)
-            time.sleep(0.01)  # Small delay for Arduino to respond
-            while self.ser.in_waiting > 0:
-                response = self.ser.readline().decode("utf-8").rstrip()
-                print(f"Arduino: {response}")
-        except Exception as e:
-            print(f"Error sending command '{command}': {e}")
+    def _send_command_sync(self, command: str):
+        """Synchronous version for use in disconnect/cleanup."""
+        self.protocol.send_command(command)
 
-    def parse_serial(self):
-        if not self.ser or not self.ser.is_open:
-            print("Error: Not connected to Arduino")
-            return
-
-        while self.ser.in_waiting > 0:
-            line = self.ser.readline().decode("utf-8").rstrip()
-            reading = parse_encoder_line(line)
-            if not reading:
-                continue
-
+    def _handle_serial_line(self, line: str):
+        """Handle a line received from serial (callback from protocol)."""
+        # Try to parse as encoder reading
+        reading = parse_encoder_line(line)
+        if reading:
             self.pose = transform_on_encoder(
-                reading, self.pose, reading, self.left, self.right
+                reading, self.pose, self.left.position, self.right.position
             )
+        else:
+            # Other messages (status, errors, etc.)
+            print(f"Arduino: {line}")
 
-    def set_left_motor(self, speed: int):
-        speed = max(0, min(255, speed))  # Clamp to valid range
-        self._send_command(f"left {speed}")
+    async def set_left_motor(self, speed: int):
+        """Set left motor speed (0-255)."""
+        speed = max(0, min(255, speed))
+        await self._send_command(f"left {speed}")
 
-    def set_right_motor(self, speed: int):
-        speed = max(0, min(255, speed))  # Clamp to valid range
-        self._send_command(f"right {speed}")
+    async def set_right_motor(self, speed: int):
+        """Set right motor speed (0-255)."""
+        speed = max(0, min(255, speed))
+        await self._send_command(f"right {speed}")
 
-    def set_both_motors(self, left_speed: int, right_speed: int):
+    async def set_both_motors(self, left_speed: int, right_speed: int):
+        """Set both motor speeds (0-255)."""
         left_speed = max(0, min(255, left_speed))
         right_speed = max(0, min(255, right_speed))
-        self._send_command(f"left {left_speed}")
-        self._send_command(f"right {right_speed}")
+        await self._send_command(f"left {left_speed}")
+        await self._send_command(f"right {right_speed}")
 
-    def stop(self):
-        self._send_command("stop")
+    async def stop(self):
+        """Stop both motors (async)."""
+        await self._send_command("stop")
 
-    def get_status(self):
-        self._send_command("status")
+    def stop_sync(self):
+        """Stop both motors (sync, for use in disconnect/cleanup)."""
+        self._send_command_sync("stop")
 
-    def keep_alive(self):
+    async def get_status(self):
+        """Request status from Arduino."""
+        await self._send_command("status")
+
+    async def keep_alive(self):
         """
         Send keep-alive command to prevent Arduino timeout.
 
         Should be called at least once per second to maintain current motor speeds.
         """
-        # Send a harmless status command to reset Arduino's timeout timer
         if time.time() - self._last_command_time > 0.5:
-            self._send_command("status")
-
-    def __enter__(self):
-        """Context manager entry."""
-        self.connect()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit."""
-        self.disconnect()
+            await self._send_command("status")
