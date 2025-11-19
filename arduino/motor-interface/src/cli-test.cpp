@@ -19,10 +19,6 @@ void setup() {
     left_motor.init();
     right_motor.init();
 
-//     for (int i = 0; i < 3; i++) {
-//         attachInterrupt(digitalPinToInterrupt(left_motor.HALL_PINS[i]), interrupt_test, RISING);
-//     }
-
   Serial.begin(115200);
   Serial.println("Motor CLI ready");
   Serial.println("Type 'help' for available commands");
@@ -42,7 +38,7 @@ void loop() {
     }
   }
 
-//  cmdProcessor.checkTimeout();
+  cmdProcessor.checkTimeout();
   left_motor.check_halls();
   right_motor.check_halls();
 
