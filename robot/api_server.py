@@ -12,10 +12,10 @@ from typing import Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from motors.motor_controller import MotorController
 
 from geometry import GlobalCoordinate, GlobalPose
 from utils.get_ultrasonic_hit_points import get_ultrasonic_hit_points, sensors
-from utils.motor_controller import MotorController
 
 app = FastAPI(title="Comfort Creature Visualizer")
 
@@ -188,7 +188,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             robot_state.motor_speeds["left"] = left_speed
                             robot_state.motor_speeds["right"] = right_speed
 
-                        print(f"Motor {motor} set to {speed}")
+                        print(f"Motor {motor} set")
                         await websocket.send_json(
                             {"type": "command_ack", "command": "set_motor"}
                         )

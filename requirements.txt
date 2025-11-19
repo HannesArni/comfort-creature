@@ -2,8 +2,10 @@
 black==25.9.0
 ruff==0.14.2
 mypy==1.18.2
+types-pyserial==3.5.0.20251001
 python-to-typescript-interfaces==0.2.0
 pre-commit==4.0.1
+pytest==8.3.4
 
 # Production dependencies
 fastapi==0.115.0
