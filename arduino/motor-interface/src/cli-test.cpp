@@ -4,7 +4,7 @@
 
 int LEFT_HALL_SENSORS[3] ={10, 3, 4};
 Motor left_motor("LEFT", 5, LEFT_HALL_SENSORS);
-int RIGHT_HALL_SENSORS[3] ={9, 8, 9};
+int RIGHT_HALL_SENSORS[3] ={9, 8, 7};
 Motor right_motor("RIGHT",  6, RIGHT_HALL_SENSORS);
 
 CommandProcessor cmdProcessor(left_motor, right_motor);
@@ -23,7 +23,7 @@ void setup() {
 //         attachInterrupt(digitalPinToInterrupt(left_motor.HALL_PINS[i]), interrupt_test, RISING);
 //     }
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("Motor CLI ready");
   Serial.println("Type 'help' for available commands");
 }
@@ -42,7 +42,7 @@ void loop() {
     }
   }
 
-  cmdProcessor.checkTimeout();
+//  cmdProcessor.checkTimeout();
   left_motor.check_halls();
   right_motor.check_halls();
 

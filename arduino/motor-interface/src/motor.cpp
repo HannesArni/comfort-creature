@@ -56,14 +56,15 @@ class Motor {
     }
 
     void on_hall_rise(int pin_index) {
-        if(is_going_forward(pin_index)){
+        bool is_forward = is_going_forward(pin_index);
+        if(is_forward){
             current_count++;
         } else {
             current_count--;
         }
 
         unsigned long now = millis();
-        Serial.println(NAME + ": " + " count: " + current_count + " dt: " + String(now - last_rise));
+        Serial.println(NAME + ": is_forward:" + is_forward + " count:" + current_count + " dt:" + String(now - last_rise));
         last_hall_pin = pin_index;
         last_rise = now;
     }
