@@ -86,6 +86,10 @@ async def websocket_endpoint(websocket: WebSocket):
     async def send_state_updates():
         try:
             while True:
+                # Update pose from motor controller
+                if motor_controller and motor_controller.is_connected():
+                    robot_state.pose = motor_controller.pose
+
                 # Update obstacles from sensors
                 hit_points = get_ultrasonic_hit_points()
                 robot_state.obstacles = [
@@ -163,7 +167,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 elif command_type == "stop":
                     robot_state.is_running = False
                     if motor_controller:
-                        motor_controller.stop()
+                        await motor_controller.stop()
                     print("Robot stopped")
                     await websocket.send_json(
                         {"type": "command_ack", "command": "stop"}
@@ -176,15 +180,17 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     if motor_controller:
                         if motor == "left":
-                            motor_controller.set_left_motor(speed)
+                            await motor_controller.set_left_motor(speed)
                             robot_state.motor_speeds["left"] = speed
                         elif motor == "right":
-                            motor_controller.set_right_motor(speed)
+                            await motor_controller.set_right_motor(speed)
                             robot_state.motor_speeds["right"] = speed
                         elif motor == "both":
                             left_speed = motor_data.get("left_speed", speed)
                             right_speed = motor_data.get("right_speed", speed)
-                            motor_controller.set_both_motors(left_speed, right_speed)
+                            await motor_controller.set_both_motors(
+                                left_speed, right_speed
+                            )
                             robot_state.motor_speeds["left"] = left_speed
                             robot_state.motor_speeds["right"] = right_speed
 
@@ -218,7 +224,7 @@ async def websocket_endpoint(websocket: WebSocket):
         print("WebSocket client disconnected")
         # Stop motors on disconnect for safety
         if motor_controller:
-            motor_controller.stop()
+            await motor_controller.stop()
             robot_state.motor_speeds = {"left": 0, "right": 0}
 
 
@@ -232,7 +238,7 @@ async def startup_event():
 
     # Try to connect to motor controller
     motor_controller = MotorController()
-    if motor_controller.connect():
+    if await motor_controller.connect():
         print("Motor controller connected successfully")
     else:
         print("Running without motor controller (simulation mode)")
