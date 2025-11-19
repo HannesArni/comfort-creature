@@ -11,7 +11,7 @@ def test_left_motor_tick_rotates_around_right_motor():
     current_pose = GlobalPose(GlobalCoordinate(0, 0), 0)
     left_motor = LocalCoordinate(-10, 0)  # 10 cm to the left
     right_motor = LocalCoordinate(10, 0)  # 10 cm to the right
-    reading = EncoderReading(motor=MotorSide.LEFT, ticks=1)
+    reading = EncoderReading(motor=MotorSide.LEFT, is_forward=True, count=1, dt=100)
 
     result = transform_on_encoder(reading, current_pose, left_motor, right_motor)
 
@@ -30,7 +30,7 @@ def test_right_motor_tick_rotates_around_left_motor():
     current_pose = GlobalPose(GlobalCoordinate(0, 0), 0)
     left_motor = LocalCoordinate(-10, 0)
     right_motor = LocalCoordinate(10, 0)
-    reading = EncoderReading(motor=MotorSide.RIGHT, ticks=1)
+    reading = EncoderReading(motor=MotorSide.RIGHT, is_forward=True, count=1, dt=100)
 
     result = transform_on_encoder(reading, current_pose, left_motor, right_motor)
 
@@ -49,7 +49,7 @@ def test_symmetric_motor_placement():
     current_pose = GlobalPose(GlobalCoordinate(5, 5), math.pi / 4)  # 45° heading
     left_motor = LocalCoordinate(-5, 0)
     right_motor = LocalCoordinate(5, 0)
-    reading = EncoderReading(motor=MotorSide.LEFT, ticks=1)
+    reading = EncoderReading(motor=MotorSide.LEFT, is_forward=True, count=1, dt=100)
 
     result = transform_on_encoder(reading, current_pose, left_motor, right_motor)
 
@@ -67,7 +67,7 @@ def test_unknown_motor_side_returns_unchanged():
     left_motor = LocalCoordinate(-10, 0)
     right_motor = LocalCoordinate(10, 0)
     # Create reading with invalid motor side
-    reading = EncoderReading(motor=None, ticks=1)
+    reading = EncoderReading(motor=None, is_forward=True, count=1, dt=100)
 
     result = transform_on_encoder(reading, current_pose, left_motor, right_motor)
 
