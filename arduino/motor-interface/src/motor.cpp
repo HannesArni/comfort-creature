@@ -20,6 +20,8 @@ class Motor {
         pinMode(MOTOR_PIN, OUTPUT);
         for (int i = 0; i < 3; i++) {
             pinMode(HALL_PINS[i], INPUT_PULLUP);
+            bool is_up = digitalRead(HALL_PINS[i]);
+            LAST_HALL_STATE[i] = is_up;
         }
     }
 
@@ -31,6 +33,7 @@ class Motor {
     int last_hall_pin;
     int current_count = 0;
     unsigned long last_rise;
+
 
     void check_halls() {
         for(int i = 0; i < 3; i++){
