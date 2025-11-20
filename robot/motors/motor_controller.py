@@ -13,21 +13,51 @@ from motors.parse_encoder_line import parse_encoder_line
 from motors.serial_protocol import SerialProtocol
 from motors.transform_on_encoder import transform_on_encoder
 from utils import config
+from utils.constants import (
+    CM_PER_TICK,
+    LEFT_MOTOR_COORDINATES,
+    RIGHT_MOTOR_COORDINATES,
+    MotorSide,
+)
 
 
 @dataclass
 class Motor:
     count: int
+    velocity: float
     position: LocalCoordinate
+
+
+@dataclass
+class Motors:
+    left: Motor
+    right: Motor
+
+    def __getitem__(self, side: MotorSide) -> Motor:
+        if side == MotorSide.LEFT:
+            return self.left
+        elif side == MotorSide.RIGHT:
+            return self.right
+        raise KeyError(f"Invalid motor side: {side}")
+
+    def __setitem__(self, side: MotorSide, motor: Motor) -> None:
+        if side == MotorSide.LEFT:
+            self.left = motor
+        elif side == MotorSide.RIGHT:
+            self.right = motor
+        else:
+            raise KeyError(f"Invalid motor side: {side}")
 
 
 class MotorController:
     """Controls differential drive motors via serial communication with Arduino."""
 
     def __init__(self):
-        self.left: Motor = Motor(count=0, position=LocalCoordinate(-20, 13))
-        self.right: Motor = Motor(count=0, position=LocalCoordinate(20, 13))
-        self.pose: GlobalPose = GlobalPose(GlobalCoordinate(0.0, 0.0), 0.0)
+        self.motors: Motors = Motors(
+            left=Motor(count=0, position=LEFT_MOTOR_COORDINATES, velocity=0.0),
+            right=Motor(count=0, position=RIGHT_MOTOR_COORDINATES, velocity=0.0),
+        )
+        self.pose: GlobalPose = GlobalPose(GlobalCoordinate(1090.0, 30.0), 0.0)
         self._last_command_time = time.time()
         self.protocol = SerialProtocol(on_line=self._handle_serial_line)
 
@@ -72,8 +102,16 @@ class MotorController:
         # Try to parse as encoder reading
         reading = parse_encoder_line(line)
         if reading:
+            self.motors[reading.motor].velocity = CM_PER_TICK / (
+                reading.dt / 1000
+            )  # cm/s
+            print(reading.motor, self.motors[reading.motor].velocity, "cm/s")
+
             self.pose = transform_on_encoder(
-                reading, self.pose, self.left.position, self.right.position
+                reading,
+                self.pose,
+                self.motors.left.position,
+                self.motors.right.position,
             )
         else:
             # Other messages (status, errors, etc.)

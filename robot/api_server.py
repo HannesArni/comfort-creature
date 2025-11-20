@@ -36,7 +36,7 @@ class RobotState:
     """Current state of the robot"""
 
     def __init__(self):
-        self.pose = GlobalPose(GlobalCoordinate(0.0, 0.0), 0.0)
+        self.pose = GlobalPose(GlobalCoordinate(900.0, 100.0), 0.0)
         self.target: Optional[GlobalCoordinate] = GlobalCoordinate(100, 100)
         self.obstacles: list[dict] = []
         self.is_running = True
