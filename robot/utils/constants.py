@@ -5,8 +5,8 @@ from geometry import LocalCoordinate
 
 
 class MotorSide(Enum):
-    RIGHT = 1
-    LEFT = 2
+    RIGHT = "right"
+    LEFT = "left"
 
 
 MOTOR_DIAMETER = 25  # cm
@@ -16,3 +16,8 @@ CM_PER_TICK = MOTOR_PERIMITER / ENCODER_TICKS_PER_REVOLUTION  # cm/tick
 
 LEFT_MOTOR_COORDINATES = LocalCoordinate(-20, 13)
 RIGHT_MOTOR_COORDINATES = LocalCoordinate(20, 13)
+
+# Range is 0-255, but some inputs are not used
+MIN_MOTOR_INPUT_RANGE = 70
+MOTOR_INPUT_LIMIT = 85
+MAX_MOTOR_INPUT_RANGE = 150

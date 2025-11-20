@@ -16,9 +16,13 @@ from utils import config
 from utils.constants import (
     CM_PER_TICK,
     LEFT_MOTOR_COORDINATES,
+    MAX_MOTOR_INPUT_RANGE,
+    MIN_MOTOR_INPUT_RANGE,
+    MOTOR_INPUT_LIMIT,
     RIGHT_MOTOR_COORDINATES,
     MotorSide,
 )
+from utils.map_range import map_range
 
 
 @dataclass
@@ -102,6 +106,7 @@ class MotorController:
         # Try to parse as encoder reading
         reading = parse_encoder_line(line)
         if reading:
+            # TODO: This does not reset the velocity to 0 if the motor is completely stopped
             self.motors[reading.motor].velocity = CM_PER_TICK / (
                 reading.dt / 1000
             )  # cm/s
@@ -117,22 +122,16 @@ class MotorController:
             # Other messages (status, errors, etc.)
             print(f"Arduino: {line}")
 
-    async def set_left_motor(self, speed: int):
-        """Set left motor speed (0-255)."""
-        speed = max(0, min(255, speed))
-        await self._send_command(f"left {speed}")
-
-    async def set_right_motor(self, speed: int):
-        """Set right motor speed (0-255)."""
-        speed = max(0, min(255, speed))
-        await self._send_command(f"right {speed}")
-
-    async def set_both_motors(self, left_speed: int, right_speed: int):
-        """Set both motor speeds (0-255)."""
-        left_speed = max(0, min(255, left_speed))
-        right_speed = max(0, min(255, right_speed))
-        await self._send_command(f"left {left_speed}")
-        await self._send_command(f"right {right_speed}")
+    async def set_motor(self, side: MotorSide, input_speed: int):
+        """input speed range: (0-100)."""
+        constrained_speed = max(0.0, min(100.0, input_speed))
+        mapped_speed = round(
+            map_range(
+                constrained_speed, 0, 100, MIN_MOTOR_INPUT_RANGE, MAX_MOTOR_INPUT_RANGE
+            )
+        )
+        capped_speed = min(mapped_speed, MOTOR_INPUT_LIMIT)
+        await self._send_command(f"{side.value.lower()} {capped_speed}")
 
     async def stop(self):
         """Stop both motors (async)."""

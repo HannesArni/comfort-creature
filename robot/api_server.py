@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from motors.motor_controller import MotorController
 
 from geometry import GlobalCoordinate, GlobalPose
+from utils.constants import MotorSide
 from utils.get_ultrasonic_hit_points import get_ultrasonic_hit_points, sensors
 
 app = FastAPI(title="Comfort Creature Visualizer")
@@ -180,19 +181,12 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     if motor_controller:
                         if motor == "left":
-                            await motor_controller.set_left_motor(speed)
-                            robot_state.motor_speeds["left"] = speed
+                            await motor_controller.set_motor(MotorSide.LEFT, speed)
                         elif motor == "right":
-                            await motor_controller.set_right_motor(speed)
-                            robot_state.motor_speeds["right"] = speed
+                            await motor_controller.set_motor(MotorSide.RIGHT, speed)
                         elif motor == "both":
-                            left_speed = motor_data.get("left_speed", speed)
-                            right_speed = motor_data.get("right_speed", speed)
-                            await motor_controller.set_both_motors(
-                                left_speed, right_speed
-                            )
-                            robot_state.motor_speeds["left"] = left_speed
-                            robot_state.motor_speeds["right"] = right_speed
+                            await motor_controller.set_motor(MotorSide.LEFT, speed)
+                            await motor_controller.set_motor(MotorSide.RIGHT, speed)
 
                         print(f"Motor {motor} set")
                         await websocket.send_json(
