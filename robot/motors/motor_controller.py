@@ -25,8 +25,8 @@ class MotorController:
     """Controls differential drive motors via serial communication with Arduino."""
 
     def __init__(self):
-        self.left: Motor = Motor(count=0, position=LocalCoordinate(-30, 30))
-        self.right: Motor = Motor(count=0, position=LocalCoordinate(30, 30))
+        self.left: Motor = Motor(count=0, position=LocalCoordinate(-20, 13))
+        self.right: Motor = Motor(count=0, position=LocalCoordinate(20, 13))
         self.pose: GlobalPose = GlobalPose(GlobalCoordinate(0.0, 0.0), 0.0)
         self._last_command_time = time.time()
         self.protocol = SerialProtocol(on_line=self._handle_serial_line)
