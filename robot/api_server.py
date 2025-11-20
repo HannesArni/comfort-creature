@@ -91,6 +91,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 if motor_controller and motor_controller.is_connected():
                     robot_state.pose = motor_controller.pose
 
+                # Let's try to get to a target speed
+                if motor_controller and motor_controller.is_connected():
+                    await motor_controller.target_velocity_test()
+
                 # Update obstacles from sensors
                 hit_points = get_ultrasonic_hit_points()
                 robot_state.obstacles = [

@@ -9,6 +9,7 @@ import time
 from dataclasses import dataclass
 
 from geometry import GlobalCoordinate, GlobalPose, LocalCoordinate
+from motors.motor import Motor
 from motors.parse_encoder_line import parse_encoder_line
 from motors.serial_protocol import SerialProtocol
 from motors.transform_on_encoder import transform_on_encoder
@@ -23,13 +24,6 @@ from utils.constants import (
     MotorSide,
 )
 from utils.map_range import map_range
-
-
-@dataclass
-class Motor:
-    count: int
-    velocity: float
-    position: LocalCoordinate
 
 
 @dataclass
@@ -66,18 +60,11 @@ class MotorController:
         self.protocol = SerialProtocol(on_line=self._handle_serial_line)
 
     async def connect(self) -> bool:
-        """
-        Establish async serial connection to Arduino.
-
-        Returns:
-            True if connection successful, False otherwise
-        """
         return await self.protocol.connect(
             config.arduino_port, config.arduino_baud_rate
         )
 
     def disconnect(self):
-        """Close serial connection."""
         if self.protocol.is_connected():
             self.stop_sync()  # Safety: stop motors before disconnecting
             self.protocol.close()
@@ -124,14 +111,22 @@ class MotorController:
 
     async def set_motor(self, side: MotorSide, input_speed: int):
         """input speed range: (0-100)."""
-        constrained_speed = max(0.0, min(100.0, input_speed))
+        constrained_speed = max(0, min(100, input_speed))
+        self.motors[side].current_input = constrained_speed
+
         mapped_speed = round(
             map_range(
                 constrained_speed, 0, 100, MIN_MOTOR_INPUT_RANGE, MAX_MOTOR_INPUT_RANGE
             )
         )
-        capped_speed = min(mapped_speed, MOTOR_INPUT_LIMIT)
+        capped_speed = min(mapped_speed, MOTOR_INPUT_LIMIT) if input_speed > 0 else 0
         await self._send_command(f"{side.value.lower()} {capped_speed}")
+
+    async def target_velocity_test(self):
+        left_motor = self.motors[MotorSide.LEFT]
+        left_motor.target_velocity = 5
+        needed_input = left_motor.calculate_needed_input_based_on_velocity()
+        await self.set_motor(MotorSide.LEFT, needed_input)
 
     async def stop(self):
         """Stop both motors (async)."""
