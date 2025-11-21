@@ -1,8 +1,10 @@
-import cv2
+import math
 import time
+
+import cv2
 import numpy as np
 from ultralytics import YOLO
-import math
+
 from camera.is_facing_camera import is_facing_camera
 from geometry import LocalCoordinate
 from utils.constants import CAMERA_COORDINATES
@@ -68,9 +70,9 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
         if boxes is None or kps_obj is None:
             continue
 
-        xyxy_small = boxes.xyxy.cpu().numpy()  # [N, 4] on small frame
-        confs = boxes.conf.cpu().numpy()  # [N]
-        kps_small = kps_obj.xy.cpu().numpy()  # [N, K, 2] on small frame
+        xyxy_small = boxes.xyxy.cpu().numpy()  # type: ignore[union-attr]  # [N, 4] on small frame
+        confs = boxes.conf.cpu().numpy()  # type: ignore[union-attr]  # [N]
+        kps_small = kps_obj.xy.cpu().numpy()  # type: ignore[union-attr]  # [N, K, 2] on small frame
 
         for i, (box_s, p) in enumerate(zip(xyxy_small, confs)):
             x1_s, y1_s, x2_s, y2_s = box_s
@@ -252,8 +254,6 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
             thickness=1,
         )
     else:
-        # No target -> no motion
-        left_cmd, right_cmd = 0.0, 0.0
         cv2.putText(
             frame,
             "NO TARGET (L=0, R=0)",
@@ -273,7 +273,10 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
     total_ms = (t3 - t0) * 1000
     fps = 1000.0 / total_ms if total_ms > 1e-3 else 0.0
 
-    info = f"grab {grab_ms:3.0f}ms | yolo {yolo_ms:3.0f}ms | draw {draw_ms:3.0f}ms | FPS {fps:4.1f} | People {people_count}"
+    info = (
+        f"grab {grab_ms:3.0f}ms | yolo {yolo_ms:3.0f}ms | "
+        f"draw {draw_ms:3.0f}ms | FPS {fps:4.1f} | People {people_count}"
+    )
     cv2.putText(
         frame,
         info,

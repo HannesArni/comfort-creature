@@ -87,7 +87,8 @@ class Motor:
             new_velocity = max(0.0, self.velocity - velocity_reduction)
             self.velocity = new_velocity
             print(
-                f"Decaying velocity: {self.velocity:.2f} cm/s (no tick for {time_delta_s:.3f}s)"
+                f"Decaying velocity: {self.velocity:.2f} cm/s "
+                f"(no tick for {time_delta_s:.3f}s)"
             )
 
     def calculate_needed_input_based_on_velocity(self):

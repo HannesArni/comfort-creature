@@ -8,7 +8,7 @@ Generic line-based protocol - delegates line processing to callback.
 import asyncio
 from typing import Callable, Optional
 
-import serial_asyncio  # type: ignore[import-not-found]
+import serial_asyncio  # type: ignore[import-untyped]
 
 
 class SerialProtocol(asyncio.Protocol):
