@@ -5,12 +5,13 @@ from ultralytics import YOLO
 import math
 from camera.is_facing_camera import is_facing_camera
 from geometry import LocalCoordinate
+from utils.constants import CAMERA_COORDINATES
 
 CAM_INDEX = 0
 
 # Camera + person constants
 CAM_HFOV_DEG = 80.0  # webcam horizontal FOV in degrees
-SHOULDER_REAL_M = 0.45  # average shoulder width in meters (rough)
+SHOULDER_REAL_CM = 45  # average shoulder width in meters (rough)
 
 # Use YOLOv8 pose model (boxes + keypoints)
 model = YOLO("yolov8n-pose.pt")
@@ -35,10 +36,6 @@ prev_t = time.time()
 
 
 def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
-    global cap
-    global prev_t
-    global model
-
     if not cap.isOpened():
         print("Camera is not opened")
     t0 = time.time()
@@ -207,24 +204,24 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
         )
 
         # --- Distance estimate using shoulder width ---
-        dist_m = 0
+        dist_cm = 0
         try:
             l_sh = kps[5]  # left shoulder (x,y)
             r_sh = kps[6]  # right shoulder (x,y)
             if not (np.allclose(l_sh, 0) or np.allclose(r_sh, 0)):
                 shoulder_px = abs(l_sh[0] - r_sh[0])
                 if shoulder_px > 1:
-                    dist_m = (SHOULDER_REAL_M * f_px) / shoulder_px
+                    dist_cm = (SHOULDER_REAL_CM * f_px) / shoulder_px
         except IndexError:
-            dist_m = 0
+            dist_cm = 0
 
-        if dist_m != 0:
-            dist_text = f"~{dist_m:.2f} m"
+        if dist_cm != 0:
+            dist_text = f"~{dist_cm:.2f} m"
         else:
             dist_text = "~? m"
         # calculate distances
-        local_x = dist_m * math.cos(math.radians(angle_deg))
-        local_y = dist_m * math.sin(math.radians(angle_deg))
+        local_x = dist_cm * math.cos(math.radians(angle_deg))
+        local_y = dist_cm * math.sin(math.radians(angle_deg))
 
         new_dist_text = (
             dist_text
@@ -254,18 +251,6 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
             markerSize=14,
             thickness=1,
         )
-        err_x = (cx - cx_img) / (W / 2.0)  # normalized [-1, 1]
-        err_text = f"err_x {err_x:+.2f}"
-        cv2.putText(
-            frame,
-            err_text,
-            (12, 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.5,
-            (255, 255, 255),
-            2,
-            cv2.LINE_AA,
-        )
     else:
         # No target -> no motion
         left_cmd, right_cmd = 0.0, 0.0
@@ -281,6 +266,7 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
         )
     t3 = time.time()
 
+    # Timing debug
     grab_ms = (t1 - t0) * 1000
     yolo_ms = (t2 - t1) * 1000
     draw_ms = (t3 - t2) * 1000
@@ -304,6 +290,14 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
     # cv2.waitKey(1)
     # if cv2.waitKey(1) & 0xFF == ord("q"):
     #     return
+
+    if primary is None or dist_cm == 0 or local_x is None or local_y is None:
+        return None
+    else:
+        return LocalCoordinate(
+            x=float(local_x) + CAMERA_COORDINATES.x,
+            y=float(local_y) + CAMERA_COORDINATES.y,
+        )
 
 
 def close_camera():

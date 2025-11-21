@@ -16,6 +16,7 @@ CM_PER_TICK = MOTOR_PERIMITER / ENCODER_TICKS_PER_REVOLUTION  # cm/tick
 
 LEFT_MOTOR_COORDINATES = LocalCoordinate(-20, 13)
 RIGHT_MOTOR_COORDINATES = LocalCoordinate(20, 13)
+CAMERA_COORDINATES = LocalCoordinate(0, 10)
 
 # Range is 0-255, but some inputs are not used
 MIN_MOTOR_INPUT_RANGE = 60

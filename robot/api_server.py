@@ -18,6 +18,7 @@ from motors.motor_controller import MotorController
 from geometry import GlobalCoordinate, GlobalPose
 from utils.constants import MotorSide
 from utils.get_ultrasonic_hit_points import get_ultrasonic_hit_points, sensors
+from camera.get_target_from_camera import get_target_from_camera
 
 app = FastAPI(title="Comfort Creature Visualizer")
 
@@ -267,15 +268,19 @@ async def websocket_endpoint(websocket: WebSocket):
 async def control_loop():
     """Main navigation/control loop running continuously"""
     while True:
-        try:
-            if motor_controller and motor_controller.is_connected():
-                # Run automatic control if enabled
-                await motor_controller.target_velocity_test()
+        target = get_target_from_camera()
+        if target:
+            robot_state.target = target.to_global(robot_state.pose)
 
-            await asyncio.sleep(0.1)  # 10 Hz control rate
-        except Exception as e:
-            print(f"Control loop error: {e}")
-            await asyncio.sleep(1)  # Back off on error
+        # try:
+        #     if motor_controller and motor_controller.is_connected():
+        #         # Run automatic control if enabled
+        #         await motor_controller.target_velocity_test()
+        #
+        #     await asyncio.sleep(0.1)  # 10 Hz control rate
+        # except Exception as e:
+        #     print(f"Control loop error: {e}")
+        #     await asyncio.sleep(1)  # Back off on error
 
 
 control_loop_task: Optional[asyncio.Task[None]] = None
