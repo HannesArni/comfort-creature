@@ -11,6 +11,7 @@ import json
 from dataclasses import asdict
 from typing import Optional
 
+from camera.get_target_from_camera import get_target_from_camera
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from motors.motor_controller import MotorController
@@ -18,7 +19,6 @@ from motors.motor_controller import MotorController
 from geometry import GlobalCoordinate, GlobalPose
 from utils.constants import MotorSide
 from utils.get_ultrasonic_hit_points import get_ultrasonic_hit_points, sensors
-from camera.get_target_from_camera import get_target_from_camera
 
 app = FastAPI(title="Comfort Creature Visualizer")
 
@@ -267,8 +267,9 @@ async def websocket_endpoint(websocket: WebSocket):
 # --- Background Tasks (Simulation) ---
 async def control_loop():
     """Main navigation/control loop running continuously"""
+    loop = asyncio.get_event_loop()
     while True:
-        target = get_target_from_camera()
+        target = await loop.run_in_executor(None, get_target_from_camera)
         if target:
             robot_state.target = target.to_global(robot_state.pose)
 
