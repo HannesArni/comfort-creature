@@ -8,6 +8,7 @@ Uses WebSocket for bidirectional communication:
 
 import asyncio
 import json
+from dataclasses import asdict
 from typing import Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -91,15 +92,23 @@ async def websocket_endpoint(websocket: WebSocket):
                 if motor_controller and motor_controller.is_connected():
                     robot_state.pose = motor_controller.pose
 
-                # Let's try to get to a target speed
-                if motor_controller and motor_controller.is_connected():
-                    await motor_controller.target_velocity_test()
-
                 # Update obstacles from sensors
                 hit_points = get_ultrasonic_hit_points()
                 robot_state.obstacles = [
                     {"x": point.x, "y": point.y} for point in hit_points
                 ]
+
+                # Get PID data from motors if available
+                pid_data = None
+                if motor_controller and motor_controller.is_connected():
+                    pid_data = {
+                        "left": asdict(
+                            motor_controller.motors[MotorSide.LEFT].get_pid_state()
+                        ),
+                        "right": asdict(
+                            motor_controller.motors[MotorSide.RIGHT].get_pid_state()
+                        ),
+                    }
 
                 # Prepare state update
                 state = {
@@ -120,6 +129,12 @@ async def websocket_endpoint(websocket: WebSocket):
                         "obstacles": robot_state.obstacles,
                         "is_running": robot_state.is_running,
                         "motor_speeds": robot_state.motor_speeds,
+                        "pid_data": pid_data,
+                        "in_automatic_mode": (
+                            motor_controller.in_automatic_mode
+                            if motor_controller
+                            else False
+                        ),
                         "sensors": [
                             {
                                 "pose": {
@@ -189,12 +204,34 @@ async def websocket_endpoint(websocket: WebSocket):
                         elif motor == "right":
                             await motor_controller.set_motor(MotorSide.RIGHT, speed)
                         elif motor == "both":
-                            await motor_controller.set_motor(MotorSide.LEFT, speed)
-                            await motor_controller.set_motor(MotorSide.RIGHT, speed)
+                            await motor_controller.set_motor(
+                                MotorSide.LEFT, motor_data.get("left_speed", 0)
+                            )
+                            await motor_controller.set_motor(
+                                MotorSide.RIGHT, motor_data.get("right_speed", 0)
+                            )
 
-                        print(f"Motor {motor} set")
+                        print(f"Motor {motor} set", speed)
                         await websocket.send_json(
                             {"type": "command_ack", "command": "set_motor"}
+                        )
+                    else:
+                        await websocket.send_json(
+                            {
+                                "type": "error",
+                                "message": "Motor controller not connected",
+                            }
+                        )
+
+                elif command_type == "set_automatic_mode":
+                    mode_data = data.get("data", {})
+                    automatic_mode = mode_data.get("enabled", False)
+
+                    if motor_controller:
+                        motor_controller.in_automatic_mode = automatic_mode
+                        print(f"Automatic mode set to: {automatic_mode}")
+                        await websocket.send_json(
+                            {"type": "command_ack", "command": "set_automatic_mode"}
                         )
                     else:
                         await websocket.send_json(
@@ -227,6 +264,21 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 # --- Background Tasks (Simulation) ---
+async def control_loop():
+    """Main navigation/control loop running continuously"""
+    while True:
+        try:
+            if motor_controller and motor_controller.is_connected():
+                # Run automatic control if enabled
+                await motor_controller.target_velocity_test()
+
+            await asyncio.sleep(0.1)  # 10 Hz control rate
+        except Exception as e:
+            print(f"Control loop error: {e}")
+            await asyncio.sleep(1)  # Back off on error
+
+
+control_loop_task: Optional[asyncio.Task[None]] = None
 
 
 @app.on_event("startup")
@@ -242,6 +294,9 @@ async def startup_event():
         print("Running without motor controller (simulation mode)")
         motor_controller = None
 
+    global control_loop_task
+    control_loop_task = asyncio.create_task(control_loop())
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -249,6 +304,12 @@ async def shutdown_event():
     global motor_controller
     if motor_controller:
         motor_controller.disconnect()
+    if control_loop_task:
+        control_loop_task.cancel()
+        try:
+            await control_loop_task
+        except asyncio.CancelledError:
+            print("Control loop cancelled")
 
 
 if __name__ == "__main__":

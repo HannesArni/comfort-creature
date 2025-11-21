@@ -3,6 +3,7 @@ from .types import (
     GlobalPose,
     LocalCoordinate,
     LocalPose,
+    PIDState,
     UltrasonicSensor,
 )
 
@@ -12,4 +13,5 @@ __all__ = [
     "LocalPose",
     "GlobalPose",
     "UltrasonicSensor",
+    "PIDState",
 ]

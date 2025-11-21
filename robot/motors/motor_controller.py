@@ -8,7 +8,7 @@ Uses the command protocol defined in motor-interface CLI.
 import time
 from dataclasses import dataclass
 
-from geometry import GlobalCoordinate, GlobalPose, LocalCoordinate
+from geometry import GlobalCoordinate, GlobalPose
 from motors.motor import Motor
 from motors.parse_encoder_line import parse_encoder_line
 from motors.serial_protocol import SerialProtocol
@@ -55,9 +55,10 @@ class MotorController:
             left=Motor(count=0, position=LEFT_MOTOR_COORDINATES, velocity=0.0),
             right=Motor(count=0, position=RIGHT_MOTOR_COORDINATES, velocity=0.0),
         )
-        self.pose: GlobalPose = GlobalPose(GlobalCoordinate(1090.0, 30.0), 0.0)
+        self.pose: GlobalPose = GlobalPose(GlobalCoordinate(0.0, 0.0), 0.0)
         self._last_command_time = time.time()
         self.protocol = SerialProtocol(on_line=self._handle_serial_line)
+        self.in_automatic_mode = False
 
     async def connect(self) -> bool:
         return await self.protocol.connect(
@@ -93,11 +94,9 @@ class MotorController:
         # Try to parse as encoder reading
         reading = parse_encoder_line(line)
         if reading:
-            # TODO: This does not reset the velocity to 0 if the motor is completely stopped
-            self.motors[reading.motor].velocity = CM_PER_TICK / (
-                reading.dt / 1000
-            )  # cm/s
-            print(reading.motor, self.motors[reading.motor].velocity, "cm/s")
+            motor = self.motors[reading.motor]
+            if reading.dt:
+                motor.set_velocity(CM_PER_TICK / (reading.dt / 1000))
 
             self.pose = transform_on_encoder(
                 reading,
@@ -109,9 +108,9 @@ class MotorController:
             # Other messages (status, errors, etc.)
             print(f"Arduino: {line}")
 
-    async def set_motor(self, side: MotorSide, input_speed: int):
+    async def set_motor(self, side: MotorSide, input_speed: float):
         """input speed range: (0-100)."""
-        constrained_speed = max(0, min(100, input_speed))
+        constrained_speed = max(0.0, min(100.0, input_speed))
         self.motors[side].current_input = constrained_speed
 
         mapped_speed = round(
@@ -123,10 +122,17 @@ class MotorController:
         await self._send_command(f"{side.value.lower()} {capped_speed}")
 
     async def target_velocity_test(self):
+        if not self.in_automatic_mode:
+            return
         left_motor = self.motors[MotorSide.LEFT]
-        left_motor.target_velocity = 5
+        left_motor.target_velocity = 40
         needed_input = left_motor.calculate_needed_input_based_on_velocity()
         await self.set_motor(MotorSide.LEFT, needed_input)
+
+        right_motor = self.motors[MotorSide.RIGHT]
+        right_motor.target_velocity = 40
+        needed_input = right_motor.calculate_needed_input_based_on_velocity()
+        await self.set_motor(MotorSide.RIGHT, needed_input)
 
     async def stop(self):
         """Stop both motors (async)."""

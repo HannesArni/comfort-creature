@@ -122,3 +122,20 @@ class UltrasonicSensor(Interface):
 
     pose: LocalPose  # Sensor position and orientation relative to robot
     name: str  # Human-readable sensor name (e.g., "Front-Left")
+
+
+@dataclass
+class PIDState(Interface):
+    """
+    PID controller state for a single motor at a point in time.
+    Used for real-time visualization and debugging.
+    """
+
+    timestamp: float  # Unix timestamp (seconds since epoch)
+    target_velocity: float  # Desired velocity in cm/s
+    actual_velocity: float  # Current velocity from encoders in cm/s
+    error: float  # Velocity error (target - actual) in cm/s
+    p_term: float  # Proportional term contribution
+    d_term: float  # Derivative term contribution
+    i_term: float  # Integral term contribution
+    motor_input: float  # Calculated motor input (0-100 standardized range)
