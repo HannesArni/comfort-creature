@@ -8,7 +8,6 @@ from geometry import LocalCoordinate
 
 CAM_INDEX = 0
 
-
 # Camera + person constants
 CAM_HFOV_DEG = 80.0  # webcam horizontal FOV in degrees
 SHOULDER_REAL_M = 0.45  # average shoulder width in meters (rough)
@@ -32,11 +31,16 @@ cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # try to keep only 1 buffered frame
 
 print("Camera opened with YOLO pose + primary target + distance. Press 'q' to quit.")
 
-
 prev_t = time.time()
 
 
 def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
+    global cap
+    global prev_t
+    global model
+
+    if not cap.isOpened():
+        print("Camera is not opened")
     t0 = time.time()
     ok, frame = cap.read()
     if not ok or frame is None:
@@ -295,8 +299,13 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
         cv2.LINE_AA,
     )
 
-    cv2.imshow("Webcam + YOLO pose + PRIMARY target + distance", frame)
+    # Controls whether to show debug view
+    # cv2.imshow("Webcam + YOLO pose + PRIMARY target + distance", frame)
+    # cv2.waitKey(1)
+    # if cv2.waitKey(1) & 0xFF == ord("q"):
+    #     return
 
 
-cap.release()
-cv2.destroyAllWindows()
+def close_camera():
+    cap.release()
+    cv2.destroyAllWindows()

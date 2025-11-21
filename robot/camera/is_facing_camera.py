@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def is_facing_camera(kps, box, horiz_tol=0.18):
     """
     Heuristic: use nose + shoulders.
