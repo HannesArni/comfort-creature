@@ -11,7 +11,8 @@ import { colors } from '../constants/colors'
 
 export function Visualization() {
   const [image] = useImage('/chat-gpt-chair.png')
-  const [skipasundImage] = useImage('/skipasund-44-layout.jpeg')
+  // const [skipasundImage] = useImage('/skipasund-44-layout.jpeg')
+  const [aranjaImage] = useImage('/aranja-layout.jpeg')
   const { robotState, isConnected, error, sendTarget, sendStart } = useRobotWebSocket()
 
   const handleCanvasClick = (worldX: number, worldY: number) => {
@@ -26,14 +27,14 @@ export function Visualization() {
       <div
         style={{
           position: 'fixed',
-          top: 10,
+          top: 70,
           right: 10,
           padding: '8px 16px',
           background: colors.SURFACE,
           color: colors.TEXT_PRIMARY,
           borderRadius: 8,
           fontSize: 14,
-          zIndex: 1000,
+          zIndex: 1002,
           border: `2px solid ${isConnected ? colors.SUCCESS : colors.ERROR}`,
         }}
       >
@@ -45,14 +46,26 @@ export function Visualization() {
       <ZoomableCanvas onCanvasClick={handleCanvasClick}>
         {(scale, position) => (
           <>
+            {/*<Layer>*/}
+            {/*  <Image*/}
+            {/*    image={skipasundImage}*/}
+            {/*    x={0}*/}
+            {/*    y={0}*/}
+            {/*    width={1000 * 1.475}*/}
+            {/*    height={800 * 1.5}*/}
+            {/*    listening={false}*/}
+            {/*  />*/}
+            {/*</Layer>*/}
             <Layer>
               <Image
-                image={skipasundImage}
-                x={0}
-                y={0}
-                width={1000 * 1.475}
-                height={800 * 1.5}
+                image={aranjaImage}
+                x={4275}
+                y={355 + 35}
+                width={10438 * 0.849}
+                height={6970 * 0.849}
+                rotation={180}
                 listening={false}
+                opacity={0.5}
               />
             </Layer>
             <Layer>
@@ -74,7 +87,7 @@ export function Visualization() {
                   <Text
                     x={robotState.pose.position.x}
                     y={-(robotState.pose.position.y + 70)}
-                    text={`Heading: ${robotState.pose.heading.toFixed(2)} rad (${((robotState.pose.heading * 180) / Math.PI).toFixed(0)}°)`}
+                    text={`(${robotState.pose.position.x},${robotState.pose.position.y + 70}) Heading: ${robotState.pose.heading.toFixed(2)} rad (${((robotState.pose.heading * 180) / Math.PI).toFixed(0)}°)`}
                     fontSize={14 / scale}
                     fill={colors.TEXT_PRIMARY}
                   />

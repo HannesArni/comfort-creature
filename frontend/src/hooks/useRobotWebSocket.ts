@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import type { UltrasonicSensor } from '../types/generated'
+import type { UltrasonicSensor, PIDState } from '../types/generated'
 
 interface RobotState {
   pose: {
@@ -13,12 +13,23 @@ interface RobotState {
   target?: { x: number; y: number }
   sensors?: Array<UltrasonicSensor>
   motor_speeds?: { left: number; right: number }
+  pid_data?: {
+    left: PIDState
+    right: PIDState
+  } | null
+  in_automatic_mode?: boolean
+}
+
+interface PIDHistory {
+  left: PIDState[]
+  right: PIDState[]
 }
 
 interface UseRobotWebSocketResult {
   robotState: RobotState | null
   isConnected: boolean
   error: string | null
+  pidHistory: PIDHistory
   sendTarget: (x: number, y: number) => void
   sendStart: () => void
   sendStop: () => void
@@ -29,15 +40,18 @@ interface UseRobotWebSocketResult {
     rightSpeed?: number
   ) => void
   stopMotors: () => void
+  sendAutomaticMode: (enabled: boolean) => void
 }
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
 const RECONNECT_DELAY = 1_000
+const MAX_PID_HISTORY = 100 // Store up to 100 samples (10 seconds at 10Hz)
 
 export function useRobotWebSocket(): UseRobotWebSocketResult {
   const [robotState, setRobotState] = useState<RobotState | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pidHistory, setPidHistory] = useState<PIDHistory>({ left: [], right: [] })
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<number | null>(null)
 
@@ -57,6 +71,18 @@ export function useRobotWebSocket(): UseRobotWebSocketResult {
 
           if (message.type === 'state_update') {
             setRobotState(message.data)
+
+            // Update PID history if new PID data is available
+            if (message.data.pid_data) {
+              setPidHistory((prev) => ({
+                left: [...prev.left, message.data.pid_data.left].slice(
+                  -MAX_PID_HISTORY
+                ),
+                right: [...prev.right, message.data.pid_data.right].slice(
+                  -MAX_PID_HISTORY
+                ),
+              }))
+            }
           }
         } catch (err) {
           console.error('Failed to parse WebSocket message:', err)
@@ -158,14 +184,26 @@ export function useRobotWebSocket(): UseRobotWebSocketResult {
     sendMessage({ type: 'stop' })
   }, [sendMessage])
 
+  const sendAutomaticMode = useCallback(
+    (enabled: boolean) => {
+      sendMessage({
+        type: 'set_automatic_mode',
+        data: { enabled },
+      })
+    },
+    [sendMessage]
+  )
+
   return {
     robotState,
     isConnected,
     error,
+    pidHistory,
     sendTarget,
     sendStart,
     sendStop,
     sendMotor,
     stopMotors,
+    sendAutomaticMode,
   }
 }

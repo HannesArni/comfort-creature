@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import './App.css'
 import { Visualization } from './pages/Visualization'
 import { RemoteControl } from './pages/RemoteControl'
+import { PIDTuning } from './pages/PIDTuning'
 import { colors } from './constants/colors'
 
 function App() {
@@ -9,6 +10,7 @@ function App() {
     <BrowserRouter>
       {/* Navigation bar */}
       <nav
+        className="app-nav"
         style={{
           position: 'fixed',
           top: 0,
@@ -16,7 +18,7 @@ function App() {
           right: 0,
           padding: '12px 20px',
           background: colors.SURFACE,
-          borderBottom: `2px solid ${colors.GRID}`,
+          borderBottom: `2px solid ${colors.BORDER}`,
           zIndex: 1001,
           display: 'flex',
           gap: '20px',
@@ -44,13 +46,25 @@ function App() {
         >
           Remote Control
         </Link>
+        <Link
+          to="/pid-tuning"
+          style={{
+            color: colors.TEXT_PRIMARY,
+            textDecoration: 'none',
+            fontSize: 16,
+            fontWeight: 500,
+          }}
+        >
+          PID Tuning
+        </Link>
       </nav>
 
       {/* Main content */}
-      <div style={{ paddingTop: '60px' }}>
+      <div className="app-content" style={{ paddingTop: '60px' }}>
         <Routes>
           <Route path="/" element={<Visualization />} />
           <Route path="/remote" element={<RemoteControl />} />
+          <Route path="/pid-tuning" element={<PIDTuning />} />
         </Routes>
       </div>
     </BrowserRouter>

@@ -1,160 +1,164 @@
+import { useEffect, useRef } from 'react'
 import { useRobotWebSocket } from '../hooks/useRobotWebSocket'
-import { MotorSlider } from '../components/MotorSlider'
+import { Joystick } from '../components/Joystick'
 import { colors } from '../constants/colors'
 
 export function RemoteControl() {
-  const { robotState, isConnected, error, sendMotor, stopMotors } = useRobotWebSocket()
+  const { isConnected, robotState, sendMotor, stopMotors, sendAutomaticMode } =
+    useRobotWebSocket()
+  const lastMotorSpeedsRef = useRef({ left: 0, right: 0 })
 
-  const handleLeftMotorChange = (speed: number) => {
-    sendMotor('left', speed)
+  const handleJoystickMove = (leftSpeed: number, rightSpeed: number) => {
+    lastMotorSpeedsRef.current = { left: leftSpeed, right: rightSpeed }
+    sendMotor('both', 0, leftSpeed, rightSpeed)
   }
 
-  const handleRightMotorChange = (speed: number) => {
-    sendMotor('right', speed)
-  }
-
-  const handleLeftMotorStop = () => {
-    sendMotor('left', 0)
-  }
-
-  const handleRightMotorStop = () => {
-    sendMotor('right', 0)
-  }
-
-  const handleEmergencyStop = () => {
+  const handleJoystickStop = () => {
+    lastMotorSpeedsRef.current = { left: 0, right: 0 }
     stopMotors()
   }
+
+  const handleAutomaticModeToggle = () => {
+    const newMode = !robotState?.in_automatic_mode
+    sendAutomaticMode(newMode)
+  }
+
+  // Keep-alive: Send motor commands periodically in manual mode to prevent Arduino timeout
+  useEffect(() => {
+    if (!isConnected || robotState?.in_automatic_mode) {
+      return
+    }
+
+    const interval = setInterval(() => {
+      // Resend last motor speeds to keep Arduino alive
+      const { left, right } = lastMotorSpeedsRef.current
+      sendMotor('both', 0, left, right)
+    }, 500) // Send every 500ms
+
+    return () => clearInterval(interval)
+  }, [isConnected, robotState?.in_automatic_mode, sendMotor])
 
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
+        width: '100vw',
+        height: '100vh',
         background: colors.BACKGROUND,
-        padding: '20px',
-        gap: '40px',
+        userSelect: 'none',
+        overflow: 'hidden',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        margin: 0,
+        padding: 0,
       }}
     >
-      {/* Connection status indicator */}
       <div
         style={{
           position: 'fixed',
-          top: 70,
-          right: 10,
-          padding: '8px 16px',
-          background: colors.SURFACE,
-          color: colors.TEXT_PRIMARY,
-          borderRadius: 8,
-          fontSize: 14,
-          zIndex: 1000,
-          border: `2px solid ${isConnected ? colors.SUCCESS : colors.ERROR}`,
-        }}
-      >
-        <span style={{ color: isConnected ? colors.SUCCESS : colors.ERROR }}>●</span>{' '}
-        {isConnected ? 'Connected' : 'Disconnected'}
-        {error && <div style={{ fontSize: 12, color: colors.ERROR }}>{error}</div>}
-      </div>
-
-      {/* Title */}
-      <h1
-        style={{
-          fontSize: '32px',
-          fontWeight: 700,
-          color: colors.TEXT_PRIMARY,
-          marginTop: '60px',
-        }}
-      >
-        Remote Control
-      </h1>
-
-      {/* Motor sliders */}
-      <div
-        style={{
+          top: '80px',
+          right: '20px',
           display: 'flex',
-          flexDirection: 'row',
-          gap: '40px',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '8px',
+          zIndex: 1002,
         }}
       >
-        <MotorSlider
-          label="Left Motor"
-          currentSpeed={robotState?.motor_speeds?.left ?? 0}
-          onSpeedChange={handleLeftMotorChange}
-          onStop={handleLeftMotorStop}
-          disabled={!isConnected}
-        />
-        <MotorSlider
-          label="Right Motor"
-          currentSpeed={robotState?.motor_speeds?.right ?? 0}
-          onSpeedChange={handleRightMotorChange}
-          onStop={handleRightMotorStop}
-          disabled={!isConnected}
-        />
-      </div>
+        {/* Connection status */}
+        <div
+          style={{
+            padding: '8px 16px',
+            background: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            borderRadius: 8,
+            fontSize: 14,
+            backdropFilter: 'blur(10px)',
+            border: `2px solid ${isConnected ? colors.SUCCESS : colors.ERROR}`,
+          }}
+        >
+          <span style={{ color: isConnected ? colors.SUCCESS : colors.ERROR }}>●</span>{' '}
+          {isConnected ? 'Connected' : 'Disconnected'}
+        </div>
 
-      {/* Emergency stop button */}
-      <button
-        onClick={handleEmergencyStop}
+        {/* Automatic mode toggle */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: 'rgba(0, 0, 0, 0.7)',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <span
+            style={{
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 500,
+            }}
+          >
+            Automatic Mode
+          </span>
+          <label
+            style={{
+              position: 'relative',
+              display: 'inline-block',
+              width: '48px',
+              height: '26px',
+              cursor: isConnected ? 'pointer' : 'not-allowed',
+              opacity: isConnected ? 1 : 0.5,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={robotState?.in_automatic_mode ?? false}
+              onChange={handleAutomaticModeToggle}
+              disabled={!isConnected}
+              style={{
+                opacity: 0,
+                width: 0,
+                height: 0,
+              }}
+            />
+            <span
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: robotState?.in_automatic_mode
+                  ? colors.SUCCESS
+                  : colors.BUTTON_SECONDARY,
+                borderRadius: '13px',
+                transition: 'background-color 0.2s',
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  content: '',
+                  height: '18px',
+                  width: '18px',
+                  left: robotState?.in_automatic_mode ? '26px' : '4px',
+                  bottom: '4px',
+                  backgroundColor: 'white',
+                  borderRadius: '50%',
+                  transition: 'left 0.2s',
+                }}
+              />
+            </span>
+          </label>
+        </div>
+      </div>
+      <Joystick
+        onMove={handleJoystickMove}
+        onStop={handleJoystickStop}
         disabled={!isConnected}
-        style={{
-          width: '200px',
-          height: '200px',
-          borderRadius: '50%',
-          border: 'none',
-          background: isConnected
-            ? `linear-gradient(135deg, ${colors.ERROR}, #cc0000)`
-            : colors.GRID,
-          color: colors.TEXT_PRIMARY,
-          fontSize: '24px',
-          fontWeight: 700,
-          cursor: isConnected ? 'pointer' : 'not-allowed',
-          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4)',
-          transition: 'all 0.2s ease',
-          opacity: isConnected ? 1 : 0.5,
-        }}
-        onMouseDown={(e) => {
-          e.currentTarget.style.transform = 'scale(0.95)'
-        }}
-        onMouseUp={(e) => {
-          e.currentTarget.style.transform = 'scale(1)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)'
-        }}
-      >
-        EMERGENCY
-        <br />
-        STOP
-      </button>
-
-      {/* Instructions */}
-      <div
-        style={{
-          maxWidth: '600px',
-          padding: '20px',
-          background: colors.SURFACE,
-          borderRadius: '12px',
-          border: `1px solid ${colors.GRID}`,
-          color: colors.TEXT_SECONDARY,
-          fontSize: '14px',
-          lineHeight: '1.6',
-        }}
-      >
-        <h3 style={{ color: colors.TEXT_PRIMARY, marginTop: 0 }}>Instructions</h3>
-        <ul style={{ paddingLeft: '20px', margin: 0 }}>
-          <li>Adjust each slider to set desired motor speed (50-160)</li>
-          <li>
-            <strong>Hold the button</strong> to activate the motor at the selected speed
-          </li>
-          <li>Release the button to stop the motor (deadman switch)</li>
-          <li>Use the emergency stop button to immediately stop all motors</li>
-          <li>Motors will automatically stop if connection is lost</li>
-        </ul>
-      </div>
+      />
     </div>
   )
 }

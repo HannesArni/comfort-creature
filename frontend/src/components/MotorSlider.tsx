@@ -7,6 +7,7 @@ interface MotorSliderProps {
   onSpeedChange: (speed: number) => void
   onStop: () => void
   disabled?: boolean
+  compactMode?: boolean
 }
 
 export function MotorSlider({
@@ -15,8 +16,9 @@ export function MotorSlider({
   onSpeedChange,
   onStop,
   disabled = false,
+  compactMode = false,
 }: MotorSliderProps) {
-  const [sliderValue, setSliderValue] = useState(105) // Midpoint of 50-160
+  const [sliderValue, setSliderValue] = useState(0) // Midpoint of 50-160
   const [isActive, setIsActive] = useState(false)
   const intervalRef = useRef<number | null>(null)
 
@@ -71,6 +73,56 @@ export function MotorSlider({
   const handleButtonEnd = (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault()
     stopMotor()
+  }
+
+  if (compactMode) {
+    // Compact mode for landscape: only show large button
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '12px',
+        }}
+      >
+        <button
+          onTouchStart={handleButtonStart}
+          onTouchEnd={handleButtonEnd}
+          onTouchCancel={handleButtonEnd}
+          onMouseDown={handleButtonStart}
+          onMouseUp={handleButtonEnd}
+          onMouseLeave={handleButtonEnd}
+          disabled={disabled}
+          style={{
+            width: '180px',
+            height: '180px',
+            borderRadius: '50%',
+            border: 'none',
+            background: isActive
+              ? `linear-gradient(135deg, ${colors.SUCCESS}, #00cc88)`
+              : `linear-gradient(135deg, ${colors.PRIMARY}, ${colors.SECONDARY})`,
+            color: colors.TEXT_PRIMARY,
+            fontSize: '20px',
+            fontWeight: 700,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            touchAction: 'none',
+            userSelect: 'none',
+            boxShadow: isActive
+              ? '0 0 30px rgba(0, 255, 136, 0.6)'
+              : '0 4px 12px rgba(0, 0, 0, 0.3)',
+            transition: 'all 0.2s ease',
+            opacity: disabled ? 0.5 : 1,
+          }}
+        >
+          {label.toUpperCase()}
+          <br />
+          <span style={{ fontSize: '14px' }}>
+            {isActive ? `RUNNING ${sliderValue}` : 'HOLD'}
+          </span>
+        </button>
+      </div>
+    )
   }
 
   return (
