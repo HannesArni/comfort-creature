@@ -5,6 +5,7 @@ Communicates with Arduino via serial to control left and right motors.
 Uses the command protocol defined in motor-interface CLI.
 """
 
+import math
 import time
 from dataclasses import dataclass
 
@@ -22,6 +23,9 @@ from utils.constants import (
     MOTOR_INPUT_LIMIT,
     RIGHT_MOTOR_COORDINATES,
     MotorSide,
+    CHAIR_WIDTH,
+    CHAIR_LENGTH,
+    DISTANCE_OCCUPIED_UPPER_THRESHOLD_CM,
 )
 from utils.map_range import map_range
 
@@ -55,10 +59,16 @@ class MotorController:
             left=Motor(count=0, position=LEFT_MOTOR_COORDINATES, velocity=0.0),
             right=Motor(count=0, position=RIGHT_MOTOR_COORDINATES, velocity=0.0),
         )
-        self.pose: GlobalPose = GlobalPose(GlobalCoordinate(0.0, 0.0), 0.0)
+        # self.pose: GlobalPose = GlobalPose(
+        #     GlobalCoordinate(CHAIR_WIDTH / 2, CHAIR_LENGTH / 2), 0.0
+        # )
+        self.pose: GlobalPose = GlobalPose(
+            GlobalCoordinate(150, 570), math.radians(-90 - 45)
+        )
         self._last_command_time = time.time()
         self.protocol = SerialProtocol(on_line=self._handle_serial_line)
-        self.in_automatic_mode = False
+        self.in_automatic_mode = True
+        self.is_occupied = False
 
     async def connect(self) -> bool:
         return await self.protocol.connect(
@@ -104,6 +114,20 @@ class MotorController:
                 self.motors.left.position,
                 self.motors.right.position,
             )
+        elif line.startswith("ULTRA:"):
+            # Ultrasonic sensor reading
+            try:
+                distance_str = line.split(":")[1].split("cm")[0].strip()
+                distance_cm = float(distance_str)
+                is_occupied = distance_cm < DISTANCE_OCCUPIED_UPPER_THRESHOLD_CM
+                if self.is_occupied != is_occupied:
+                    print(
+                        f"Occupancy changed: {'Occupied' if is_occupied else 'Unoccupied'}"
+                    )
+                self.is_occupied = is_occupied
+                print(f"Ultrasonic Distance: {distance_cm:.1f} cm")
+            except (IndexError, ValueError):
+                print(f"Invalid ultrasonic reading: {line}")
         else:
             # Other messages (status, errors, etc.)
             print(f"Arduino: {line}")
@@ -133,6 +157,39 @@ class MotorController:
         right_motor.target_velocity = 40
         needed_input = right_motor.calculate_needed_input_based_on_velocity()
         await self.set_motor(MotorSide.RIGHT, needed_input)
+
+    async def target_count_test(self, target: GlobalCoordinate):
+        if not self.in_automatic_mode:
+            return
+
+        local_target = target.to_local(self.pose)
+        angle = (
+            -math.atan2(local_target.x, local_target.y) if local_target.x != 0 else 0
+        )
+        distance = math.hypot(local_target.x, local_target.y)
+
+        print(
+            f"Target Local: x={local_target.x:.1f} cm, y={local_target.y:.1f} cm, angle={math.degrees(angle):.1f}° , distance={distance:.1f} cm"
+        )
+
+        angle_deg = math.degrees(angle)
+        if math.fabs(angle_deg) > 15:
+            motor_input = max(min((math.fabs(angle_deg) - 15) * 1 / 2 + 16, 50), 16)
+            if angle < 0:
+                # Turn right
+                await self.set_motor(MotorSide.LEFT, motor_input)
+                await self.set_motor(MotorSide.RIGHT, 0)
+            else:
+                # Turn left
+                await self.set_motor(MotorSide.LEFT, 0)
+                await self.set_motor(MotorSide.RIGHT, motor_input)
+        elif distance > 50:
+            motor_input = max(min(distance * 1 / 100 + 22, 28), 22)
+            for motor in MotorSide:
+                await self.set_motor(motor, motor_input)
+        else:
+            for motor in MotorSide:
+                await self.set_motor(motor, 0)
 
     async def stop(self):
         """Stop both motors (async)."""

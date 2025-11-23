@@ -273,10 +273,7 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
     total_ms = (t3 - t0) * 1000
     fps = 1000.0 / total_ms if total_ms > 1e-3 else 0.0
 
-    info = (
-        f"grab {grab_ms:3.0f}ms | yolo {yolo_ms:3.0f}ms | "
-        f"draw {draw_ms:3.0f}ms | FPS {fps:4.1f} | People {people_count}"
-    )
+    info = f"grab {grab_ms:3.0f}ms | yolo {yolo_ms:3.0f}ms | draw {draw_ms:3.0f}ms | FPS {fps:4.1f} | People {people_count}"
     cv2.putText(
         frame,
         info,
@@ -298,8 +295,8 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
         return None
     else:
         return LocalCoordinate(
-            x=float(local_x) + CAMERA_COORDINATES.x,
-            y=float(local_y) + CAMERA_COORDINATES.y,
+            x=float(local_y) + CAMERA_COORDINATES.y,
+            y=float(local_x) + CAMERA_COORDINATES.x,
         )
 
 

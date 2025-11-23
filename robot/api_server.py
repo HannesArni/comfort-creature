@@ -40,7 +40,8 @@ class RobotState:
 
     def __init__(self):
         self.pose = GlobalPose(GlobalCoordinate(900.0, 100.0), 0.0)
-        self.target: Optional[GlobalCoordinate] = GlobalCoordinate(100, 100)
+        # self.target: Optional[GlobalCoordinate] = GlobalCoordinate(000, 500)
+        self.target: Optional[GlobalCoordinate] = None
         self.obstacles: list[dict] = []
         self.is_running = True
         self.motor_speeds = {"left": 0, "right": 0}  # Current motor speeds
@@ -264,27 +265,34 @@ async def websocket_endpoint(websocket: WebSocket):
             robot_state.motor_speeds = {"left": 0, "right": 0}
 
 
+control_loop_task: Optional[asyncio.Task[None]] = None
+camera_loop_task: Optional[asyncio.Task[None]] = None
+
+
 # --- Background Tasks (Simulation) ---
-async def control_loop():
+async def camera_target_loop():
     """Main navigation/control loop running continuously"""
     loop = asyncio.get_event_loop()
     while True:
         target = await loop.run_in_executor(None, get_target_from_camera)
         if target:
             robot_state.target = target.to_global(robot_state.pose)
-
-        # try:
-        #     if motor_controller and motor_controller.is_connected():
-        #         # Run automatic control if enabled
-        #         await motor_controller.target_velocity_test()
-        #
-        #     await asyncio.sleep(0.1)  # 10 Hz control rate
-        # except Exception as e:
-        #     print(f"Control loop error: {e}")
-        #     await asyncio.sleep(1)  # Back off on error
+        else:
+            robot_state.target = None
 
 
-control_loop_task: Optional[asyncio.Task[None]] = None
+async def control_loop():
+    """Main navigation/control loop running continuously"""
+    while True:
+        try:
+            if motor_controller and motor_controller.is_connected():
+                # Run automatic control if enabled
+                await motor_controller.target_count_test(robot_state.target)
+
+            await asyncio.sleep(0.05)  # 50 Hz control rate
+        except Exception as e:
+            print(f"Control loop error: {e}")
+            await asyncio.sleep(1)  # Back off on error
 
 
 @app.on_event("startup")
@@ -301,7 +309,9 @@ async def startup_event():
         motor_controller = None
 
     global control_loop_task
+    global camera_loop_task
     control_loop_task = asyncio.create_task(control_loop())
+    camera_loop_task = asyncio.create_task(camera_target_loop())
 
 
 @app.on_event("shutdown")
@@ -314,6 +324,12 @@ async def shutdown_event():
         control_loop_task.cancel()
         try:
             await control_loop_task
+        except asyncio.CancelledError:
+            print("Control loop cancelled")
+    if camera_loop_task:
+        camera_loop_task.cancel()
+        try:
+            await camera_loop_task
         except asyncio.CancelledError:
             print("Control loop cancelled")
 
