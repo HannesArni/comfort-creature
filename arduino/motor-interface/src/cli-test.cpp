@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "motor.cpp"
 #include "command_processor.h"
+#include "sonar.h"
 
 int LEFT_HALL_SENSORS[3] ={10, 3, 4};
 Motor left_motor("LEFT", 5, LEFT_HALL_SENSORS);
@@ -11,13 +12,9 @@ CommandProcessor cmdProcessor(left_motor, right_motor);
 
 String inputBuffer = "";
 
-void interrupt_test() {
-    Serial.println("Interrupt");
-}
-
 void setup() {
-    left_motor.init();
-    right_motor.init();
+  left_motor.init();
+  right_motor.init();
 
   Serial.begin(115200);
   Serial.println("Motor CLI ready");
@@ -41,6 +38,5 @@ void loop() {
   cmdProcessor.checkTimeout();
   left_motor.check_halls();
   right_motor.check_halls();
-
-  delay(2);
+  maybe_read_sonar();
 }
