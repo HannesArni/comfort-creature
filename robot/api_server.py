@@ -11,7 +11,7 @@ import json
 from dataclasses import asdict
 from typing import Optional
 
-from camera.get_target_from_camera import get_target_from_camera
+from camera.get_target_from_camera import get_target_from_camera, CameraTarget
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from motors.motor_controller import MotorController
@@ -42,13 +42,14 @@ class RobotState:
         self.pose = GlobalPose(GlobalCoordinate(900.0, 100.0), 0.0)
         # self.target: Optional[GlobalCoordinate] = GlobalCoordinate(000, 500)
         self.target: Optional[GlobalCoordinate] = None
+        self.is_target_facing_camera = False
         self.obstacles: list[dict] = []
         self.is_running = True
         self.motor_speeds = {"left": 0, "right": 0}  # Current motor speeds
 
 
 robot_state = RobotState()
-motor_controller: Optional[MotorController] = None
+motor_controller = MotorController()
 
 
 # --- REST Endpoints (minimal, just health check) ---
@@ -91,7 +92,7 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             while True:
                 # Update pose from motor controller
-                if motor_controller and motor_controller.is_connected():
+                if motor_controller.is_connected():
                     robot_state.pose = motor_controller.pose
 
                 # Update obstacles from sensors
@@ -102,7 +103,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 # Get PID data from motors if available
                 pid_data = None
-                if motor_controller and motor_controller.is_connected():
+                if motor_controller.is_connected():
                     pid_data = {
                         "left": asdict(
                             motor_controller.motors[MotorSide.LEFT].get_pid_state()
@@ -132,11 +133,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         "is_running": robot_state.is_running,
                         "motor_speeds": robot_state.motor_speeds,
                         "pid_data": pid_data,
-                        "in_automatic_mode": (
-                            motor_controller.in_automatic_mode
-                            if motor_controller
-                            else False
-                        ),
+                        "in_automatic_mode": (motor_controller.in_automatic_mode),
                         "sensors": [
                             {
                                 "pose": {
@@ -188,8 +185,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 elif command_type == "stop":
                     robot_state.is_running = False
-                    if motor_controller:
-                        await motor_controller.stop()
+                    await motor_controller.stop()
                     print("Robot stopped")
                     await websocket.send_json(
                         {"type": "command_ack", "command": "stop"}
@@ -200,48 +196,34 @@ async def websocket_endpoint(websocket: WebSocket):
                     motor = motor_data.get("motor")  # "left", "right", or "both"
                     speed = motor_data.get("speed", 0)
 
-                    if motor_controller:
-                        if motor == "left":
-                            await motor_controller.set_motor(MotorSide.LEFT, speed)
-                        elif motor == "right":
-                            await motor_controller.set_motor(MotorSide.RIGHT, speed)
-                        elif motor == "both":
-                            await motor_controller.set_motor(
-                                MotorSide.LEFT, motor_data.get("left_speed", 0)
-                            )
-                            await motor_controller.set_motor(
-                                MotorSide.RIGHT, motor_data.get("right_speed", 0)
-                            )
+                    if motor == "left":
+                        await motor_controller.set_motor(MotorSide.LEFT, speed)
+                    elif motor == "right":
+                        await motor_controller.set_motor(MotorSide.RIGHT, speed)
+                    elif motor == "both":
+                        await motor_controller.set_motor(
+                            MotorSide.LEFT, motor_data.get("left_speed", 0)
+                        )
+                        await motor_controller.set_motor(
+                            MotorSide.RIGHT, motor_data.get("right_speed", 0)
+                        )
 
-                        print(f"Motor {motor} set", speed)
-                        await websocket.send_json(
-                            {"type": "command_ack", "command": "set_motor"}
-                        )
-                    else:
-                        await websocket.send_json(
-                            {
-                                "type": "error",
-                                "message": "Motor controller not connected",
-                            }
-                        )
+                    print(f"Motor {motor} set", speed)
+                    await websocket.send_json(
+                        {"type": "command_ack", "command": "set_motor"}
+                    )
 
                 elif command_type == "set_automatic_mode":
                     mode_data = data.get("data", {})
                     automatic_mode = mode_data.get("enabled", False)
 
-                    if motor_controller:
-                        motor_controller.in_automatic_mode = automatic_mode
-                        print(f"Automatic mode set to: {automatic_mode}")
-                        await websocket.send_json(
-                            {"type": "command_ack", "command": "set_automatic_mode"}
-                        )
-                    else:
-                        await websocket.send_json(
-                            {
-                                "type": "error",
-                                "message": "Motor controller not connected",
-                            }
-                        )
+                    motor_controller.in_automatic_mode = automatic_mode
+                    if not automatic_mode:
+                        await motor_controller.stop()
+                    print(f"Automatic mode set to: {automatic_mode}")
+                    await websocket.send_json(
+                        {"type": "command_ack", "command": "set_automatic_mode"}
+                    )
 
                 else:
                     print(f"Unknown command type: {command_type}")
@@ -260,9 +242,8 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("WebSocket client disconnected")
         # Stop motors on disconnect for safety
-        if motor_controller:
-            await motor_controller.stop()
-            robot_state.motor_speeds = {"left": 0, "right": 0}
+        await motor_controller.stop()
+        robot_state.motor_speeds = {"left": 0, "right": 0}
 
 
 control_loop_task: Optional[asyncio.Task[None]] = None
@@ -270,13 +251,18 @@ camera_loop_task: Optional[asyncio.Task[None]] = None
 
 
 # --- Background Tasks (Simulation) ---
-async def camera_target_loop():
+async def camera_target_loop() -> None:
     """Main navigation/control loop running continuously"""
     loop = asyncio.get_event_loop()
     while True:
+        if not motor_controller.in_automatic_mode:
+            await asyncio.sleep(0.1)
+            continue
+        target: Optional[CameraTarget] = None
         target = await loop.run_in_executor(None, get_target_from_camera)
         if target:
-            robot_state.target = target.to_global(robot_state.pose)
+            robot_state.target = target.coordinate.to_global(robot_state.pose)
+            robot_state.is_target_facing_camera = target.is_facing_camera
         else:
             robot_state.target = None
 
@@ -285,9 +271,11 @@ async def control_loop():
     """Main navigation/control loop running continuously"""
     while True:
         try:
-            if motor_controller and motor_controller.is_connected():
+            if motor_controller.is_connected():
                 # Run automatic control if enabled
-                await motor_controller.target_count_test(robot_state.target)
+                await motor_controller.target_count_test(
+                    robot_state.target, robot_state.is_target_facing_camera
+                )
 
             await asyncio.sleep(0.05)  # 50 Hz control rate
         except Exception as e:
@@ -318,8 +306,7 @@ async def startup_event():
 async def shutdown_event():
     """Clean up when server shuts down"""
     global motor_controller
-    if motor_controller:
-        motor_controller.disconnect()
+    motor_controller.disconnect()
     if control_loop_task:
         control_loop_task.cancel()
         try:

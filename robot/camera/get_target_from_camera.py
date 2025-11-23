@@ -1,5 +1,6 @@
 import math
 import time
+from dataclasses import dataclass
 
 import cv2
 import numpy as np
@@ -37,7 +38,13 @@ print("Camera opened with YOLO pose + primary target + distance. Press 'q' to qu
 prev_t = time.time()
 
 
-def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
+@dataclass
+class CameraTarget:
+    coordinate: LocalCoordinate
+    is_facing_camera: bool
+
+
+def get_target_from_camera() -> CameraTarget or None:  # type: ignore
     if not cap.isOpened():
         print("Camera is not opened")
     t0 = time.time()
@@ -294,9 +301,12 @@ def get_target_from_camera() -> LocalCoordinate or None:  # type: ignore
     if primary is None or dist_cm == 0 or local_x is None or local_y is None:
         return None
     else:
-        return LocalCoordinate(
-            x=float(local_y) + CAMERA_COORDINATES.y,
-            y=float(local_x) + CAMERA_COORDINATES.x,
+        return CameraTarget(
+            coordinate=LocalCoordinate(
+                x=float(local_y) + CAMERA_COORDINATES.y,
+                y=float(local_x) + CAMERA_COORDINATES.x,
+            ),
+            is_facing_camera=facing,
         )
 
 

@@ -17,15 +17,13 @@ from motors.transform_on_encoder import transform_on_encoder
 from utils import config
 from utils.constants import (
     CM_PER_TICK,
+    DISTANCE_OCCUPIED_UPPER_THRESHOLD_CM,
     LEFT_MOTOR_COORDINATES,
     MAX_MOTOR_INPUT_RANGE,
     MIN_MOTOR_INPUT_RANGE,
     MOTOR_INPUT_LIMIT,
     RIGHT_MOTOR_COORDINATES,
     MotorSide,
-    CHAIR_WIDTH,
-    CHAIR_LENGTH,
-    DISTANCE_OCCUPIED_UPPER_THRESHOLD_CM,
 )
 from utils.map_range import map_range
 
@@ -158,8 +156,10 @@ class MotorController:
         needed_input = right_motor.calculate_needed_input_based_on_velocity()
         await self.set_motor(MotorSide.RIGHT, needed_input)
 
-    async def target_count_test(self, target: GlobalCoordinate):
-        if not self.in_automatic_mode:
+    async def target_count_test(
+        self, target: GlobalCoordinate, is_target_facing_camera
+    ):
+        if not self.in_automatic_mode or is_target_facing_camera:
             return
 
         local_target = target.to_local(self.pose)
