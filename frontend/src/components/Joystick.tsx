@@ -24,9 +24,9 @@ export function Joystick({ onMove, onStop, disabled = false }: JoystickProps) {
     // x: left/right (-1 to 1, where -1 is left)
 
     // Base speed from forward/backward (40-160 range)
-    const baseSpeed = y * 40
+    const baseSpeed = y * 80
 
-    const turnAmount = x * (0.8 * (40 - Math.abs(baseSpeed)))
+    const turnAmount = x * (0.8 * (80 - Math.abs(baseSpeed)))
     console.log(x, y)
 
     // Differential drive: add turn to one side, subtract from other

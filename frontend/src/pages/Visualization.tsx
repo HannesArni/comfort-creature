@@ -2,6 +2,7 @@ import { Layer, Image, Circle, Text } from 'react-konva'
 import { ZoomableCanvas } from '../components/ZoomableCanvas'
 import { Grid } from '../components/Grid'
 import { RobotLocalFrame } from '../components/RobotLocalFrame'
+import { AutomaticModeToggle } from '../components/AutomaticModeToggle'
 import { useRobotWebSocket } from '../hooks/useRobotWebSocket'
 import useImage from 'use-image'
 import { colors } from '../constants/colors'
@@ -12,7 +13,8 @@ import { colors } from '../constants/colors'
 export function Visualization() {
   const [image] = useImage('/chat-gpt-chair.png')
   // const [skipasundImage] = useImage('/skipasund-44-layout.jpeg')
-  const [aranjaImage] = useImage('/aranja-layout.jpeg')
+  // const [aranjaImage] = useImage('/aranja-layout.jpeg')
+  const [lhiImage] = useImage('/lhi-teikningar.jpg')
   const { robotState, isConnected, error, sendTarget, sendStart } = useRobotWebSocket()
 
   const handleCanvasClick = (worldX: number, worldY: number) => {
@@ -23,24 +25,37 @@ export function Visualization() {
 
   return (
     <>
-      {/* Connection status indicator */}
+      {/* Connection status and controls */}
       <div
         style={{
           position: 'fixed',
           top: 70,
           right: 10,
-          padding: '8px 16px',
-          background: colors.SURFACE,
-          color: colors.TEXT_PRIMARY,
-          borderRadius: 8,
-          fontSize: 14,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '8px',
           zIndex: 1002,
-          border: `2px solid ${isConnected ? colors.SUCCESS : colors.ERROR}`,
         }}
       >
-        <span style={{ color: isConnected ? colors.SUCCESS : colors.ERROR }}>●</span>{' '}
-        {isConnected ? 'Connected' : 'Disconnected'}
-        {error && <div style={{ fontSize: 12, color: colors.ERROR }}>{error}</div>}
+        {/* Connection status indicator */}
+        <div
+          style={{
+            padding: '8px 16px',
+            background: colors.SURFACE,
+            color: colors.TEXT_PRIMARY,
+            borderRadius: 8,
+            fontSize: 14,
+            border: `2px solid ${isConnected ? colors.SUCCESS : colors.ERROR}`,
+          }}
+        >
+          <span style={{ color: isConnected ? colors.SUCCESS : colors.ERROR }}>●</span>{' '}
+          {isConnected ? 'Connected' : 'Disconnected'}
+          {error && <div style={{ fontSize: 12, color: colors.ERROR }}>{error}</div>}
+        </div>
+
+        {/* Automatic mode toggle */}
+        <AutomaticModeToggle />
       </div>
 
       <ZoomableCanvas onCanvasClick={handleCanvasClick}>
@@ -56,14 +71,26 @@ export function Visualization() {
             {/*    listening={false}*/}
             {/*  />*/}
             {/*</Layer>*/}
+            {/*<Layer>*/}
+            {/*  <Image*/}
+            {/*    image={aranjaImage}*/}
+            {/*    x={4275}*/}
+            {/*    y={355 + 35}*/}
+            {/*    width={10438 * 0.849}*/}
+            {/*    height={6970 * 0.849}*/}
+            {/*    rotation={180}*/}
+            {/*    listening={false}*/}
+            {/*    opacity={0.5}*/}
+            {/*  />*/}
+            {/*</Layer>*/}
             <Layer>
               <Image
-                image={aranjaImage}
-                x={4275}
-                y={355 + 35}
-                width={10438 * 0.849}
-                height={6970 * 0.849}
-                rotation={180}
+                image={lhiImage}
+                x={-1140}
+                y={-5910 + 101}
+                width={1688 * 3.58}
+                height={2400 * 3.58}
+                rotation={0}
                 listening={false}
                 opacity={0.5}
               />
@@ -87,7 +114,7 @@ export function Visualization() {
                   <Text
                     x={robotState.pose.position.x}
                     y={-(robotState.pose.position.y + 70)}
-                    text={`(${robotState.pose.position.x},${robotState.pose.position.y + 70}) Heading: ${robotState.pose.heading.toFixed(2)} rad (${((robotState.pose.heading * 180) / Math.PI).toFixed(0)}°)`}
+                    text={`(${Math.round(robotState.pose.position.x)},${Math.round(robotState.pose.position.y + 70)}) Heading: ${robotState.pose.heading.toFixed(2)} rad (${((robotState.pose.heading * 180) / Math.PI).toFixed(0)}°)`}
                     fontSize={14 / scale}
                     fill={colors.TEXT_PRIMARY}
                   />
@@ -106,13 +133,13 @@ export function Visualization() {
                   <Circle
                     x={robotState.target.x}
                     y={-robotState.target.y}
-                    radius={5 / scale}
+                    radius={20 / scale}
                     fill={colors.TARGET}
                     strokeWidth={2 / scale}
                   />
                   <Text
                     x={robotState.target.x}
-                    y={-robotState.target.y - 20 / scale}
+                    y={-robotState.target.y - 40 / scale}
                     text={`Target`}
                     fontSize={12 / scale}
                     fill={colors.TARGET}
