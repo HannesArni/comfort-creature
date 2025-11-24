@@ -45,3 +45,4 @@ Thumbs.db
 CLAUDE.md
 
 robot/test.py
+robot/camera/yolov8n-pose.pt
