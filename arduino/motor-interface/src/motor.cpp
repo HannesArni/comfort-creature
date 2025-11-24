@@ -67,7 +67,7 @@ class Motor {
         }
 
         unsigned long now = millis();
-        Serial.println(NAME + ": is_forward:" + is_forward + " count:" + current_count + " dt:" + String(now - last_rise));
+        Serial.println(NAME + ": is_forward:" + is_forward + " count:" + current_count + " dt:" + String(now - last_rise) + " pin:" + String(pin_index));
         last_hall_pin = pin_index;
         last_rise = now;
     }

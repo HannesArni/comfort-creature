@@ -159,8 +159,13 @@ class MotorController:
     async def target_count_test(
         self, target: GlobalCoordinate, is_target_facing_camera
     ):
-        if not self.in_automatic_mode or is_target_facing_camera:
+        if not self.in_automatic_mode:
             return
+        # TODO: add this back for debugging
+        # if is_target_facing_camera:
+        #     for motor in MotorSide:
+        #         await self.set_motor(motor, 0)
+        #     return
 
         local_target = target.to_local(self.pose)
         angle = (
@@ -173,20 +178,33 @@ class MotorController:
         )
 
         angle_deg = math.degrees(angle)
-        if math.fabs(angle_deg) > 15:
-            motor_input = max(min((math.fabs(angle_deg) - 15) * 1 / 2 + 16, 50), 16)
+        absolute_angle = math.fabs(angle_deg)
+        ANGLE_RANGE = [10, 40]
+        DISTANCE_RANGE = [50, 150]
+        if absolute_angle > ANGLE_RANGE[0]:
+            MOTOR_RANGE = [30, 50]
+            angle_span = ANGLE_RANGE[1] - ANGLE_RANGE[0]
+            motor_span = MOTOR_RANGE[1] - MOTOR_RANGE[0]
+            ratio = angle_span / motor_span
+            motor_input = (absolute_angle - ANGLE_RANGE[0]) * ratio + MOTOR_RANGE[0]
+            capped_motor_input = max(min(motor_input, MOTOR_RANGE[1]), MOTOR_RANGE[0])
             if angle < 0:
                 # Turn right
-                await self.set_motor(MotorSide.LEFT, motor_input)
+                await self.set_motor(MotorSide.LEFT, capped_motor_input)
                 await self.set_motor(MotorSide.RIGHT, 0)
             else:
                 # Turn left
                 await self.set_motor(MotorSide.LEFT, 0)
-                await self.set_motor(MotorSide.RIGHT, motor_input)
-        elif distance > 50:
-            motor_input = max(min(distance * 1 / 100 + 22, 28), 22)
+                await self.set_motor(MotorSide.RIGHT, capped_motor_input)
+        elif distance > DISTANCE_RANGE[0]:
+            MOTOR_RANGE = [30, 50]
+            motor_span = MOTOR_RANGE[1] - MOTOR_RANGE[0]
+            distance_span = DISTANCE_RANGE[1] - DISTANCE_RANGE[0]
+            ratio = distance_span / motor_span
+            motor_input = distance * ratio + MOTOR_RANGE[0]
+            capped_motor_input = max(min(motor_input, MOTOR_RANGE[1]), MOTOR_RANGE[0])
             for motor in MotorSide:
-                await self.set_motor(motor, motor_input)
+                await self.set_motor(motor, capped_motor_input)
         else:
             for motor in MotorSide:
                 await self.set_motor(motor, 0)
