@@ -229,8 +229,8 @@ def get_target_from_camera() -> CameraTarget or None:  # type: ignore
         else:
             dist_text = "~? m"
         # calculate distances
-        local_x = dist_cm * math.cos(math.radians(angle_deg))
-        local_y = dist_cm * math.sin(math.radians(angle_deg))
+        local_y = dist_cm * math.cos(math.radians(angle_deg))
+        local_x = dist_cm * math.sin(math.radians(angle_deg))
 
         new_dist_text = (
             dist_text
@@ -303,8 +303,8 @@ def get_target_from_camera() -> CameraTarget or None:  # type: ignore
     else:
         return CameraTarget(
             coordinate=LocalCoordinate(
-                x=float(local_y) + CAMERA_COORDINATES.y,
-                y=float(local_x) + CAMERA_COORDINATES.x,
+                x=float(local_x) + CAMERA_COORDINATES.x,
+                y=float(local_y) + CAMERA_COORDINATES.y,
             ),
             is_facing_camera=facing,
         )

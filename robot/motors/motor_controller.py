@@ -161,11 +161,14 @@ class MotorController:
     ):
         if not self.in_automatic_mode:
             return
-        # TODO: add this back for debugging
-        # if is_target_facing_camera:
-        #     for motor in MotorSide:
-        #         await self.set_motor(motor, 0)
-        #     return
+        if is_target_facing_camera:
+            for motor in MotorSide:
+                await self.set_motor(motor, 0)
+            return
+        if not target:
+            for motor in MotorSide:
+                await self.set_motor(motor, 0)
+            return
 
         local_target = target.to_local(self.pose)
         angle = (
@@ -179,13 +182,13 @@ class MotorController:
 
         angle_deg = math.degrees(angle)
         absolute_angle = math.fabs(angle_deg)
-        ANGLE_RANGE = [10, 40]
+        ANGLE_RANGE = [15, 40]
         DISTANCE_RANGE = [50, 150]
         if absolute_angle > ANGLE_RANGE[0]:
-            MOTOR_RANGE = [30, 50]
-            angle_span = ANGLE_RANGE[1] - ANGLE_RANGE[0]
-            motor_span = MOTOR_RANGE[1] - MOTOR_RANGE[0]
-            ratio = angle_span / motor_span
+            MOTOR_RANGE = [30, 40]
+            angle_span = ANGLE_RANGE[1] - ANGLE_RANGE[0]  # 30
+            motor_span = MOTOR_RANGE[1] - MOTOR_RANGE[0]  # 10
+            ratio = motor_span / angle_span  # 10/30 = 3
             motor_input = (absolute_angle - ANGLE_RANGE[0]) * ratio + MOTOR_RANGE[0]
             capped_motor_input = max(min(motor_input, MOTOR_RANGE[1]), MOTOR_RANGE[0])
             if angle < 0:
@@ -200,11 +203,11 @@ class MotorController:
             MOTOR_RANGE = [30, 50]
             motor_span = MOTOR_RANGE[1] - MOTOR_RANGE[0]
             distance_span = DISTANCE_RANGE[1] - DISTANCE_RANGE[0]
-            ratio = distance_span / motor_span
+            ratio = motor_span / distance_span
             motor_input = distance * ratio + MOTOR_RANGE[0]
             capped_motor_input = max(min(motor_input, MOTOR_RANGE[1]), MOTOR_RANGE[0])
-            for motor in MotorSide:
-                await self.set_motor(motor, capped_motor_input)
+            await self.set_motor(MotorSide.RIGHT, capped_motor_input)
+            await self.set_motor(MotorSide.LEFT, capped_motor_input + 2)
         else:
             for motor in MotorSide:
                 await self.set_motor(motor, 0)

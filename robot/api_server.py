@@ -260,7 +260,7 @@ async def camera_target_loop() -> None:
             continue
         target: Optional[CameraTarget] = None
         target = await loop.run_in_executor(None, get_target_from_camera)
-        if target:
+        if target and target.coordinate:
             robot_state.target = target.coordinate.to_global(robot_state.pose)
             robot_state.is_target_facing_camera = target.is_facing_camera
         else:
