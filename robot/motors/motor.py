@@ -52,12 +52,12 @@ class Motor:
             filtered_velocity = median(self.velocity_buffer)
 
             # Log if filtering removed a spike
-            if abs(current_velocity - filtered_velocity) > 20.0:
-                print(
-                    f"Median filter: raw={current_velocity:.1f} cm/s, "
-                    f"filtered={filtered_velocity:.1f} cm/s, "
-                    f"buffer={[f'{v:.1f}' for v in self.velocity_buffer]}"
-                )
+            # if abs(current_velocity - filtered_velocity) > 20.0:
+            #     print(
+            #         f"Median filter: raw={current_velocity:.1f} cm/s, "
+            #         f"filtered={filtered_velocity:.1f} cm/s, "
+            #         f"buffer={[f'{v:.1f}' for v in self.velocity_buffer]}"
+            #     )
 
             self.last_velocity = self.velocity
             self.velocity = filtered_velocity

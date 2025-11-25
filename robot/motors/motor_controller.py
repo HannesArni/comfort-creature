@@ -126,6 +126,12 @@ class MotorController:
                 print(f"Ultrasonic Distance: {distance_cm:.1f} cm")
             except (IndexError, ValueError):
                 print(f"Invalid ultrasonic reading: {line}")
+        elif "motor speed set to:" in line:
+            # Acknowledgment of motor speed set
+            return
+        elif "Both motors stopped" in line:
+            # Acknowledgment of motor speed set
+            return
         else:
             # Other messages (status, errors, etc.)
             print(f"Arduino: {line}")
@@ -161,13 +167,12 @@ class MotorController:
     ):
         if not self.in_automatic_mode:
             return
+
         if is_target_facing_camera:
-            for motor in MotorSide:
-                await self.set_motor(motor, 0)
+            await self.stop()
             return
         if not target:
-            for motor in MotorSide:
-                await self.set_motor(motor, 0)
+            await self.stop()
             return
 
         local_target = target.to_local(self.pose)
@@ -209,8 +214,7 @@ class MotorController:
             await self.set_motor(MotorSide.RIGHT, capped_motor_input)
             await self.set_motor(MotorSide.LEFT, capped_motor_input + 2)
         else:
-            for motor in MotorSide:
-                await self.set_motor(motor, 0)
+            await self.stop()
 
     async def stop(self):
         """Stop both motors (async)."""
